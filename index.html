@@ -607,67 +607,93 @@ Phase 2：货物类型 + 目的国 → Neo4j知识图谱 → LLM生成Cypher →
 </section>
 </div><div class="tab-content" id="tab-p5">
 <section id="p5">
-<h2>P5: Agent Harness — AI Agent 全生命周期工程框架与进化引擎</h2>
+<h2>P5: Agent Harness — 软件开发全生命周期工程框架与进化引擎</h2>
 <div style="background:#f8f9fa;padding:15px 20px;border-radius:8px;margin:15px 0;font-size:14px;color:#555;">
-<b>项目背景：</b>大模型辅助编程（Vibe Coding）中极易陷入零散对话式无序探索、缺乏架构纪律与质量失控等痛点。团队需要一套能自我进化的标准化流程来管理Agent开发全生命周期。<br>
-<b>核心痛点：</b>① Agent开发无标准流程，质量不可控 ② Prompt散落在代码里，版本不可追溯 ③ 新人上手慢，缺乏Pattern参考 ④ 线上事故频发，缺少质量门禁拦截 ⑤ 团队经验无法沉淀，同样的问题反复踩坑。<br>
-<b>服务对象：</b>AI研发团队内部（算法工程师、后端工程师、产品经理）。<br>
-<b>技术栈：</b>结构化Spec+DEV-PLAN / 原子化Task+Sub-Agent隔离 / 2-Stage Code Review / Git-backed版本管理 / CI/CD自动化评测 / feedback-进化引擎 / LangSmith / structlog。<br>
-<b>关键效果：</b>新Agent项目开发周期2周→3天，线上事故月均3-4次→0-1次（四层质量门禁拦截），新人上手2周→3天（Pattern库+Anti-pattern库），团队经验持续沉淀（进化引擎规则毕业机制）。
+<b>项目背景：</b>大模型辅助编程（Vibe Coding）中极易陷入零散对话式无序探索、缺乏架构纪律与质量失控等痛点。团队需要一套能自我进化的标准化流程来管理产品开发全生命周期——从模糊想法到可运行、可发布的产品。<br>
+<b>核心痛点：</b>① 产品开发无标准流程，每个项目各自为政 ② 需求模糊不清，开发到一半才发现理解偏差 ③ 代码质量不可控，缺乏自动防线 ④ 团队经验无法沉淀，同样的问题反复踩坑 ⑤ AI辅助编码没有纪律约束，批量产出低质量代码。<br>
+<b>服务对象：</b>产品经理、全栈工程师、算法工程师。<br>
+<b>技术栈：</b>五阶段SDLC(Spec→Design→Plan→Build→Evolve) / 4 Sub-Agent(implementer/code-reviewer/feedback-observer/evolution-runner) / 11 Skills / 6 Hooks(PreToolUse/PostToolUse/UserPromptSubmit/SessionStart/Stop) / DAG并行Phase调度 / Sub-Agent隔离 / 验证即证据门禁 / Markdown Spec+Plan / MCP Design-to-Code / feedback进化引擎。<br>
+<b>关键效果：</b>从0到1产品交付周期压缩50%+，代码质量通过两阶段审查+四步走验证保证，团队经验通过进化引擎持续沉淀为规则，新人上手从2周缩短到3天。
 </div>
-<div class="narrative"><strong>面试话术：</strong>这个项目是因为团队做Agent没有标准流程，Prompt散落在代码里，上线后效果崩了不知道哪里出问题。所以设计了一套包含五个阶段和四层质量门禁的工程框架，最核心的设计是<b>一个闭环 + 一个引擎</b>：五阶段闭环（Spec→Plan→Implement→Review→Evolve）管开发流程，进化引擎（feedback-observer + evolution-runner）管经验沉淀和规则自升级。具体来说，每个Agent从结构化需求Spec开始，经过DEV-PLAN拆分为原子化Task，每个Task独立实现→自检→2-Stage Review（先验做对了再做做好了）→修复→commit的循环，所有Task完成后过四步走Phase验证和业务评测红线。关键纪律有三条：<b>验证即证据</b>——每个完成声明必须现场附上编译输出；<b>Sub-Agent隔离</b>——每个Task fresh实例防止错误污染；<b>反合理化清单</b>——提前定义AI最容易跳过规则的借口和正确做法。上线后的反馈不靠自觉回顾，而是由进化引擎自动记录、自动扫描、当某个模式出现3次以上自动提议升级为正式规则。坑主要有两个：一是质量红线一开始单项必过，一个边界case波动就阻断发布，后来改成总分加权+关键场景保底+异常波动检测三层保护；二是评测集会过拟合，每月更新30%加新旧隔离机制防止评测泄露。整体来看，Harness不是一套静态流程文档，而是一套能自我进化的Agent工程方法论。</div>
+<div class="narrative"><strong>面试话术：</strong>Agent Harness不是针对AI Agent开发的，而是一套<b>完整的软件开发全生命周期工程框架</b>，跑在Claude Code之上。核心架构分五层：<b>主控层（CLAUDE.md）</b>定义角色和流程路由；<b>Sub-Agent调度层</b>派发4个专用Agent（implementer负责编码、code-reviewer负责两阶段审查、feedback-observer静默记录反馈、evolution-runner扫描进化信号）；<b>Skills能力层</b>封装了11个可调用Skill，覆盖从需求收集(product-spec-builder)到发布(release-builder)的完整链路；<b>Hooks事件层</b>挂载6个脚本在PreToolUse/PostToolUse/UserPromptSubmit等生命周期事件上，自动做编译检查、端口清理、反馈检测、自动推送；<b>进化引擎层</b>四层递进——feedback静默记录→3+次出现自动提议规则毕业→Skill评分低提议优化→新模式5+次提议创建新Skill。<br><br>
+开发时核心流程是五阶段SDLC：<b>Spec</b>（product-spec-builder通过追问生成完整需求文档）→<b>Design</b>（design-brief + design-maker通过MCP对接Pencil/Figma出设计稿）→<b>Plan</b>（dev-planner按无占位符原则拆分为原子化Phase和Task）→<b>Build</b>（dev-builder驱动per-Task实现循环：编码→自检→派发code-reviewer两阶段审查→修复→commit，全部Task完成后执行四步走Phase验证）→<b>Evolve</b>（进化引擎自动沉淀经验）。<br><br>
+三大工程纪律铁律：<b>验证即证据</b>——每个完成声明必须现场附上新鲜验证输出，不接受"之前测过了"；<b>Sub-Agent隔离</b>——每个Task一个fresh实例，不继承session历史，防止Task A的错误假设污染Task B；<b>反合理化清单</b>——预定义AI最容易跳过规则的借口和正确做法（"这个很简单直接写就行"→"Plan Mode不看复杂度看纪律"）。<br><br>
+Hooks层是独特的自动化防线：<b>detect-feedback-signal.sh</b>在UserPromptSubmit事件中检测用户是否在纠正AI（匹配"不是这样""搞错了""你漏了"等30+种模式），命中时注入信号强制派发feedback-observer；<b>pre-commit-check.sh</b>在git commit前自动跑tsc --noEmit，编译不通过阻止提交；<b>auto-push.sh</b>在commit后自动推送到远程。<br><br>
+关键坑有两个：一是早期per-Task review-fix循环的编译验证太宽松，允许"跳过tsc直接commit"导致问题后置，后来用pre-commit-check Hook硬性阻断才根治。二是进化引擎初期提议太频繁打扰用户，后来加了"occurrences≥3才提议、用户只确认不跳过"的收敛策略。</div>
 <div style="background:#e8f5e9;padding:12px 20px;border-radius:6px;margin:12px 0;font-size:14px;color:#2e7d32;border-left:4px solid #4CAF50;">
-<b>项目出彩部分：</b>① <strong>五阶段闭环+进化引擎</strong>——不只是规定流程，还能从feedback中自动提炼规则，系统越用越贴合团队。② <strong>工程纪律铁律三条</strong>（验证即证据/Sub-Agent隔离/反合理化清单）——解决了AI Agent开发中"看起来快了实际上质量崩了"的核心矛盾。③ <strong>四层质量门禁</strong>——Per-Task 2-Stage Review → Per-Phase四步走验证 → 冒烟测试 → 业务评测红线，每层发现问题的成本递减。④ <strong>评测集每月更新30%+总分加权</strong>——用线上真实样本替换老case，新case和Prompt示例做相似度检查，防止过拟合。
+<b>项目出彩部分：</b>① <strong>五层架构设计</strong>（主控→Sub-Agent→Skills→Hooks→进化引擎）——不是简单的流程文档，是一套可运行的工程化系统。② <strong>Sub-Agent隔离 + 验证即证据 + 反合理化清单</strong>三条铁律——解决了AI辅助开发中"看起来快了实际质量崩了"的核心矛盾。③ <strong>6个Hook自动化防线</strong>——在PreToolUse自动编译检查、UserPromptSubmit自动检测修正信号、PostToolUse自动推送，零人工干预。④ <strong>进化引擎四层递进</strong>——feedback→规则毕业→Skill优化→新Skill创建，框架越用越贴合团队。
 </div>
 <div class="mermaid">
 flowchart TB
-    subgraph 流程["五阶段开发流程"]
+    subgraph 主控["主控层 (CLAUDE.md)"]
+        R["角色定义 + 流程路由 + Skill触发规则 + Sub-Agent调度"]
+    end
+
+    subgraph 流程["五阶段SDLC"]
         direction LR
-        S1["① Spec<br/>需求→结构化文档"]
-        S2["② Plan<br/>DEV-PLAN→原子化Task"]
-        S3["③ Implement<br/>Per-Task编码+自检"]
-        S4["④ Review<br/>2-Stage审查+修复"]
-        S5["⑤ Evolve<br/>反馈收集→规则升级"]
+        S1["① Spec<br/>product-spec-builder"]
+        S2["② Design<br/>design-brief → design-maker"]
+        S3["③ Plan<br/>dev-planner → DEV-PLAN"]
+        S4["④ Build<br/>dev-builder per-Task循环"]
+        S5["⑤ Evolve<br/>进化引擎自动沉淀"]
     end
     S1 --> S2 --> S3 --> S4 --> S5
-    S5 -.->|反哺| S1
+    S5 -.->|feedback反哺| S1
+
+    subgraph SubAgent["Sub-Agent 调度层"]
+        direction LR
+        A1["implementer<br/>编码+自检"]
+        A2["code-reviewer<br/>2-Stage审查"]
+        A3["feedback-observer<br/>静默记录反馈"]
+        A4["evolution-runner<br/>扫描进化信号"]
+    end
+    S4 --> A1 & A2
+    S5 --> A3 --> A4
 
     subgraph 循环["Per-Task 实现循环"]
         direction LR
-        T1["编码实现"]
+        T1["编码"]
         T2["自检"]
         T3["Stage 1<br/>Spec Compliance"]
         T4["Stage 2<br/>Code Quality"]
         T1 --> T2 --> T3
-        T3 -->|未通过| T1
+        T3 -->|不通过| T1
         T3 -->|通过| T4
-        T4 -->|未通过| T1
+        T4 -->|不通过| T1
     end
-    S3 --> T1
+    S4 --> T1
+    T4 -->|通过+commit| phase_done["Phase完成"]
 
-    subgraph 门禁["四层质量门禁"]
-        direction TB
-        G1["Layer 1: Per-Task 2-Stage Review<br/>先验做对了(Spec)→再验做得好(Code)"]
-        G2["Layer 2: Per-Phase 四步走验证<br/>Review→测试完整性→编译验证→功能测试"]
-        G3["Layer 3: 冒烟测试<br/>安全扫描+密钥泄露+进程管理"]
-        G4["Layer 4: 业务评测红线<br/>意图/幻觉/延迟加权总分+场景保底"]
+    subgraph 门禁["质量门禁"]
+        step1["1. Per-Task 2-Stage Review<br/>Spec Compliance → Code Quality"]
+        step2["2. Per-Phase 四步走验证<br/>Review→测试→编译→功能"]
+        step3["3. 冒烟测试<br/>安全+密钥+进程"]
     end
-    T4 -->|通过| G1
-    S4 --> G2 --> G3 --> G4
+    T4 --> step1
+    phase_done --> step2 --> step3
 
-    subgraph 进化["进化引擎（自我进化）"]
-        direction LR
-        E1["feedback-observer<br/>静默记录纠正与反馈"]
-        E2["evolution-runner<br/>4层进化扫描"]
-        E3["规则毕业<br/>3+次→正式规则"]
-        E4["Skill优化/创建<br/>评分偏低/新模式"]
-        E1 --> E2 --> E3 & E4
+    subgraph Hooks["Hooks 事件层 (自动化守卫)"]
+        H1["PreToolUse<br/>pre-commit-check.sh<br/>tsc --noEmit阻止commit"]
+        H2["UserPromptSubmit<br/>detect-feedback-signal.sh<br/>检测30+修正关键词"]
+        H3["PostToolUse<br/>auto-push.sh<br/>commit后自动推送"]
+        H4["SessionStart<br/>check-evolution.sh<br/>检查进化提议"]
+    end
+
+    subgraph 进化["进化引擎"]
+        E1["L1: 经验积累<br/>feedback静默记录"]
+        E2["L2: 规则毕业<br/>occurrences≥3→正式规则"]
+        E3["L3: Skill优化<br/>评分持续偏低→调整"]
+        E4["L4: 新Skill创建<br/>新模式≥5次→skill-builder"]
+        E1 --> E2 --> E3 --> E4
     end
     S5 --> E1
-    E3 & E4 -.->|更新| S1
+
+    subgraph Skills["11 Skills 能力层"]
+        SK["product-spec-builder<br/>design-brief-builder<br/>design-maker<br/>dev-planner<br/>dev-builder<br/>code-review<br/>bug-fixer<br/>release-builder<br/>skill-builder<br/>feedback-writer<br/>evolution-engine"]
+    end
 </div>
-<div class="qa"><div class="qa-q" onclick="toggle(this)">Q1: 跨越速运已经有LangSmith做观测了，为什么还要再搞一套Agent Harness？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>LangSmith和Harness解决的问题不一样。LangSmith是"运行时"——Agent上线后，它能帮你追踪每次调用的输入输出、延迟、Token消耗。但它不管"开发时"——这个Agent的Prompt是怎么设计的、评测集在哪里、发布前有没有跑过质量检查。</p><p>我们之前出现过这样的问题：一个同事改了Prompt，本地测试没问题，直接推到生产环境，结果线上效果崩了。LangSmith能告诉你"崩了"，但它不能阻止你"把会崩的代码推上去"。Harness就是管这个的——定义了一套从需求到发布的标准流程，每个Agent必须走完Intent Spec、Design Review、Implementation、Verification、Feedback Loop五个阶段才能上线。</p><div class="follow"><p><b>→ Harness具体管了哪些LangSmith管不了的事？</b></p><p>Prompt版本管理、评测集配置、质量红线检查、灰度发布流程、Pattern沉淀。LangSmith只管"跑起来之后发生了什么"，Harness管"怎么开发、怎么发布、怎么迭代"。</p></div></div></div>
-<div class="qa"><div class="qa-q" onclick="toggle(this)">Q2: Agent Harness的五阶段流程具体是怎么运作的？每个阶段的输入输出是什么？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>五个阶段形成一个闭环。第一阶段是<b>Spec</b>——输入是业务需求，输出是结构化的Spec文档（包含目标、用户画像、Top 5场景、边界、成功指标）。这步的关键是强制填写这些字段，避免开发到一半才发现需求不清晰。</p><p>第二阶段是<b>DEV-PLAN</b>——根据Spec拆分为可独立验收的Phase，每个Phase又拆成原子化Task。每个Task必须明确要创建或修改的具体文件路径和交付内容。这步的纪律是<b>无占位符原则</b>：不允许出现"待补充""类似Task N"这种模糊描述，每个Task要具体到任何人拿到都能直接开工。</p><p>第三阶段是<b>Implementation</b>——<b>但不是一口气写完全部代码，而是走 Per-Task 实现循环</b>：每个Task编码→自检→派发code-reviewer做2-Stage审查（Stage 1验Spec Compliance做对了没有，过了才进Stage 2验Code Quality做好了没有）→不通过则修复→通过则commit。Stage 1有HIGH priority问题时停在Stage 1，不进Stage 2。这保证<b>问题在最小单元就被发现，不累积到后期</b>。</p><p>第四阶段是<b>Verification</b>——所有Task完成后走Per-Phase四步走验证：Code Review（检查Scope Creep）→测试完整性→编译验证（tsc --noEmit零错误）→功能测试（启动dev server验证）。通过后再过业务评测红线。这里要区分框架层和实例层：<b>四步走验证是框架的通用门禁</b>，适用于所有Agent；<b>评测红线（比如意图识别≥90%、幻觉率≤5%）是项目实例化的配置</b>，每个Agent可以根据业务场景设自己的阈值。</p><p>第五阶段<b>Evolve</b>——上线后的反馈不靠人为回顾，而是由进化引擎自动处理：feedback-observer静默记录每次纠正和反馈，evolution-runner扫描积累，当同一个问题出现3次以上自动提议升级为正式规则。</p><div class="follow"><p><b>→ Spec的Schema长什么样？</b></p><p>YAML文件，必填字段包括：目标（要解决什么问题）、用户画像（面向谁）、核心场景（Top 5场景）、边界（什么不做）、成功指标（怎么衡量好坏）。强制填写这些字段是为了避免"做完了才发现做错了"的情况。</p><p><b>→ 这个五阶段和传统软件开发的Waterfall有什么区别？</b></p><p>核心区别有两点。一是<b>Per-Task review→fix循环</b>——不是攒到最后一起验证，而是每完成一个最小单元就验证修复，发现问题成本随阶段指数增长这个规律对AI开发同样成立。二是<b>Evolve阶段是自动化的</b>——传统项目复盘靠自觉，Harness的进化引擎自动从feedback中挖掘规则升级机会。</p><p><b>→ 评测红线的阈值怎么定的？</b></p><p>基线从已有Agent的线上表现统计出来。比如意图识别准确率，表现最好的Agent 92%，最差的82%，我们取90%作为红线——低于这个就说明比现有最差的还差。但这是<b>项目级别的实例化配置</b>，不是框架本身的门禁。框架的门禁是Per-Phase四步走验证，这个更底层、更通用。</p></div></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q1: Agent Harness和传统SDLC/敏捷开发有什么区别？它解决的是什么层面的问题？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>传统SDLC（瀑布/敏捷）解决的是"人与人之间的协作流程"——需求文档、Sprint规划、Code Review、上线审批。Agent Harness解决的是<b>"人和AI之间的协作流程"</b>——AI辅助编码时代，开发者的工作方式从"写代码"变成了"用自然语言描述需求→AI生成→人工Review"。传统流程有几件事管不了：第一，AI生成的代码质量参差不齐，传统Code Review没有自动化防线；第二，AI容易"跳过思考直接编码"，没有Plan Mode约束；第三，AI没有记忆，团队踩过的坑无法自动沉淀为规则。</p><p>Harness把这套管起来了。核心分五层：主控层定义AI的行为准则；Sub-Agent层派发implementer和code-reviewer做per-Task的编码→审查→修复循环；Skills层封装了11个可调用模块（从product-spec-builder到release-builder覆盖完整链路）；Hooks层在PreToolUse/PostToolUse等事件上挂载自动化守卫脚本；进化引擎层把用户每一次纠正静默记录为feedback，3次以上自动提议升级为正式规则。</p><p>打个比方：传统SDLC是"人→人"的协作规范，Harness是"人→AI"的协作规范。</p><div class="follow"><p><b>→ 和LangSmith比呢？</b></p><p>性质不同。LangSmith是观测层——追踪运行时发生了什么。Harness是流程层——管的是开发时怎么做。两者可以互补：Harness控制开发流程，LangSmith提供运行时观测数据辅助决策。</p></div></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q2: Agent Harness的五阶段SDLC具体怎么运作？每个阶段的交付物是什么？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>五阶段是<b>Spec→Design→Plan→Build→Evolve</b>，和传统SDLC不同的是每个阶段都有对应的Skill自动执行，且内嵌了工程纪律。</p><p><b>第一阶段Spec</b>——调product-spec-builder，通过追问引导用户想清楚需求。不是用户说什么就记什么，是用追问（"这个功能真的需要吗""用户是谁""怎么衡量成功"）逼用户想清楚。输出Product-Spec.md。纪律是<b>AI优先原则</b>：遇到任何功能需求先判断能不能用AI做。</p><p><b>第二阶段Design</b>——可选。design-brief-builder出视觉方向，design-maker通过MCP对接Pencil/Figma从设计工具读取精确的页面数值（宽高/padding/字号/颜色）。开发时每个Task前重新读取，不凭记忆编码。</p><p><b>第三阶段Plan</b>——调dev-planner，按<b>无占位符原则</b>拆分为原子化Phase和Task。每个Task必须写明具体文件路径和交付内容。产出DEV-PLAN.md。核心纪律：<b>可验证原则</b>（每个Phase完成后必须能编译能运行）、<b>依赖正序原则</b>（地基先打房子后盖）、<b>粒度适中原则</b>（一个Phase对应1-3个可独立验收的交付物）。</p><p><b>第四阶段Build</b>——调dev-builder，进入per-Task实现循环。每个Task：Plan Mode列TaskList→读设计稿数值→编码→自检→派发code-reviewer做<b>两阶段审查</b>（Stage 1 Spec Compliance→过了才进Stage 2 Code Quality）→不通过则修复→通过则commit。所有Task完成后执行<b>四步走Phase验证</b>（Code Review→测试完整性→tsc --noEmit编译验证→功能测试）+ <b>冒烟测试</b>（安全扫描+密钥泄露+进程管理）。纪律：<b>验证即证据</b>——每次完成声明必须附现场编译输出。</p><p><b>第五阶段Evolve</b>——由进化引擎自动驱动，不是传统的人为复盘。feedback-observer静默记录每次用户的纠正，evolution-runner扫描积累，occurrences≥3提议规则毕业，评分持续偏低提议Skill优化，新模式≥5次提议创建新Skill。用户确认后执行。</p><div class="follow"><p><b>→ 这个五阶段和Scrum有什么区别？</b></p><p>Scrum解决团队协作节奏（Sprint/站会/回顾）。Harness解决"每个原子单元怎么做"——编码→自检→审查→修复→commit的循环，以及过程中不做无关改动。Scrum管宏观节奏，Harness管微观工程纪律。</p><p><b>→ 什么情况下可以跳过Design阶段？</b></p><p>没有视觉要求的项目（CLI工具、API服务、纯后端）可以跳过。但有前端界面的项目强烈建议至少走design-brief确定信息密度和视觉方向。如果连design-brief都没有，开发时UI全靠AI自由发挥，往往要返工。</p></div></div></div>
 <div class="qa"><div class="qa-q" onclick="toggle(this)">Q3: Harness里的Prompt版本管理是怎么做的？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>Prompt存在Git仓库里，每个Agent一个目录。改Prompt就是提交一个PR，PR里必须包含评测集对比结果——改了Prompt之后跑一遍评测，和上一个版本的分数做对比。分数提升了或者持平才能合并，分数下降就拒绝。</p><p>版本回滚很快，因为Prompt是文本文件，Git直接回滚到上一个commit就行，秒级。我们还做了一个小工具，能在Web界面里看到两个版本Prompt的diff，以及对应的评测分数变化，很直观。</p><div class="follow"><p><b>→ Prompt和业务代码放在同一个仓库吗？</b></p><p>是的。这样版本号天然一致，发版时一起打包。但也有缺点——改Prompt也要走代码发布的流程，不能像MCP Prompt原语那样即时生效。权衡下来，我们更需要版本可追溯，所以选了Git-backed。</p><p><b>→ Prompt diff的可读性怎么保证？</b></p><p>YAML格式，每个段落一行，diff时能清楚看到哪段改了。长Prompt按功能分块——角色定义、约束条件、输出格式、示例，每块独立修改，diff比较清晰。</p></div></div></div>
 <div class="qa"><div class="qa-q" onclick="toggle(this)">Q4: Harness里的质量门禁是怎么设计的？Per-Task审查、Per-Phase验证、评测红线这三层分别管什么？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>质量门禁分四层，每层在开发流程的不同节点介入，越靠里发现问题越早、修复成本越低。</p><p><b>Layer 1: Per-Task 2-Stage Review</b>——这是最细粒度的门禁。每个Task实现后，派发code-reviewer Sub-Agent执行两阶段审查。Stage 1验<b>"做对了没有"</b>（Spec Compliance）——对照Spec逐条功能确认是否已实现，有没有Scope Creep（代码中出现了Spec没写的功能）。Stage 1有HIGH priority问题就停在原地，不进Stage 2。Stage 2才验<b>"做好了没有"</b>（Code Quality）——命名规范、类型安全、无any、无硬编码密钥。两个Stage都通过才能commit。这层的设计哲学是<b>先确保做对的事，再追求做事的质量</b>，顺序不能反。</p><p><b>Layer 2: Per-Phase 四步走验证</b>——所有Task完成后执行：① Code Review（对照Phase交付清单逐项确认）→ ② 测试完整性（功能清单打勾）→ ③ 编译验证（tsc --noEmit零错误）→ ④ 功能测试（启动dev server验证+冒烟）。这层关注的是<b>跨Task的集成问题</b>——导入关系对不对、文件依赖有没有环、命名一致性。</p><p><b>Layer 3: 冒烟测试</b>——安全扫描（npm audit无critical漏洞）、密钥泄露检查（代码中无硬编码API Key/Token）、进程管理（只有1个dev server实例在运行）。</p><p><b>Layer 4: 业务评测红线</b>——这是<b>项目实例化的配置层</b>，不是框架本身的通用门禁。每个Agent配置200-500个评测case，跑CI时自动评测，输出意图识别准确率、回复相关性、幻觉率等指标。我们采用总分加权+关键场景保底+异常波动检测三层保护，防止一个边界case波动卡死发布。</p><p>核心思路是：<b>越内层的门禁越自动化、越早发现问题、越通用；越外层的门禁越贴近业务语义、越晚介入、越需要人工判断。</b></p><div class="follow"><p><b>→ 评测集是怎么构建的？</b></p><p>三部分：人工标注的典型场景（占40%）、线上捞的真实对话（占40%）、边界和对抗case（占20%）。真实对话按客户满意度筛选，只保留评分4分以上的。对抗case专门用来测试模型的鲁棒性，比如故意输入错别字、语序混乱的句子。</p><p><b>→ 评测集会不会过拟合？</b></p><p>会。我们遇到过Prompt在评测集上表现很好，但上线后真实用户的表现一般。后来发现是因为评测集里有些case和Prompt里的示例太像了。现在的做法是每月更新一次评测集，替换掉30%的老case，加入新的线上样本。同时做<b>新旧隔离</b>——替换下来的老case存到退役评测集里，定期跑回归测试。</p></div></div></div>
 <div class="qa"><div class="qa-q" onclick="toggle(this)">Q5: Agent Harness和Dify/Coze这类低代码平台是什么关系？会替代它们吗？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>不是替代关系，是互补。Dify和Coze解决的是"用什么工具"——它们提供可视化的工作流编辑器、预置的模型接口、现成的RAG组件。Harness解决的是"怎么开发"——定义了从需求到发布的标准流程和质量标准。</p><p>在我们的团队里，非技术背景的产品经理用Dify快速搭建原型验证想法；验证通过后再交给工程师，用Harness规范化的流程做工程化改造——补评测集、过质量红线、写设计文档。两个阶段用不同的工具，但Harness管住了"不能随便把一个没验证的Dify工作流直接推到生产环境"。</p><div class="follow"><p><b>→ 如果团队用Dify做的Agent，Harness怎么统一管理？</b></p><p>Dify导出的配置可以转成Harness的Intent Spec。评测集和红线检查是通用的，不管底层用的是Dify还是自研代码。我们在Harness里做了适配层，支持导入Dify的Prompt和评测结果。</p></div></div></div>
