@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "rag-ingest": {
+      "name": "rag-ingest",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=rag-ingest",
+      "source": "skillhub",
+      "version": "1.0.0"
+    }
+  }
+}
