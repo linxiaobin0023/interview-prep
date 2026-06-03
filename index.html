@@ -73,7 +73,6 @@ section h2{font-size:22px;color:#1a1a2e;padding-bottom:10px;border-bottom:2px so
 <a href="#" onclick="switchTab('p5');return false;">P5 Agent Harness</a>
 <a href="#" onclick="switchTab('qa');return false;">通用题库</a>
 <a href="#" onclick="switchTab('rag');return false;">RAG专题</a>
-<a href="#" onclick="switchTab('agent-shop');return false;">智能导购</a>
 </nav>
 <main>
 <h1>面试准备 — 跨越速运 AI 中台</h1>
@@ -86,7 +85,6 @@ section h2{font-size:22px;color:#1a1a2e;padding-bottom:10px;border-bottom:2px so
   <button class="tab-btn" data-tab="p5" onclick="switchTab('p5')">P5 Agent Harness</button>
   <button class="tab-btn" data-tab="qa" onclick="switchTab('qa')">通用题库</button>
 <button class="tab-btn" data-tab="rag" onclick="switchTab('rag')">RAG专题</button>
-<button class="tab-btn" data-tab="agent-shop" onclick="switchTab('agent-shop')">智能导购</button>
 </div>
 <div class="tab-content active" id="tab-overview">
 <div class="narrative" id="narrative">
@@ -712,6 +710,205 @@ flowchart TB
 </section>
 </div>
 <div class="tab-content" id="tab-qa">
+<section id="agent">
+<h2>AI Agent 高频面试题</h2>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q1: 现在常见的Agent架构模式有哪些？跨越速运的项目里是怎么选的？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>四种模式用得比较多。ReAct是最基础的——模型想一步做一步，适合简单任务，比如查个轨迹、回答个常见问题。Plan-and-Execute是先做规划再做执行，适合复杂任务——比如客户说"帮我查一下这批货为什么延误了，顺便改个地址"，需要先拆解成查轨迹、分析原因、改地址三个子任务。Reflection是自检模式，生成回复后再让模型检查一遍有没有问题，适合对质量要求高的场景。Multi-Agent是多个Agent分工协作，我们MCP集群其实就是这种思路——不同业务线的Agent共享底层服务。</p><p>跨越速运的项目里没有用某一种模式包打天下，而是按场景选。语音客服的对话管理是状态机+ReAct混合，异常处理是Plan-and-Execute，评测环节用了Reflection。</p><div class="follow"><p><b>→ ReAct的循环怎么控制？会不会无限循环？</b></p><p>会，所以要设上限。我们配了最大轮数5轮，超过5轮还没结束就强制退出，走兜底话术。还有一个防重复机制——如果模型连续两次想调用同一个Tool且参数完全一样，就判定为循环，直接退出。</p><p><b>→ Plan-and-Execute里规划失败怎么办？</b></p><p>如果规划出来的子任务有依赖循环或者不可执行的步骤，会触发重新规划。最多重试3次，3次都失败就降级到ReAct模式，让模型边想边做。</p></div></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q2: 一个物流知识库，用RAG、微调还是长上下文？怎么选？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>这三个不是互斥的，而是各有分工。RAG管"知识"——物流时效、运费规则、网点信息这些经常变的东西，放RAG里更新最快，改个文档就行，不用重新训练模型。微调管"风格"——模型说话的方式、对物流术语的理解、客服话术的规范性，这些通过微调内化到模型里。长上下文管"一次性大文档"——比如客户发了一个Excel表格里面几十条运单，需要一次性处理。</p><p>跨越速运的实践是"微调管风格、RAG管知识"。客服对话风格通过微调内化，产品知识通过RAG动态检索。长上下文我们目前用得比较少，主要是客服场景里很少有一次性几十条运单的情况。</p><div class="follow"><p><b>→ RAG和长上下文能结合吗？</b></p><p>可以。对于特别大的知识库，先用RAG粗召回相关的Top-K文档，然后把这K个文档塞到长上下文窗口里让模型精读。这样既能处理海量知识，又能利用长上下文的精准理解能力。不过成本会比较高，需要权衡。</p><p><b>→ 成本上哪个最高？</b></p><p>长上下文最高。一次性塞几万token，推理成本是线性增长的。RAG的成本主要是检索，推理时只带少量相关片段。微调的成本是训练时一次性支出，推理时和基础模型一样。所以日常查询RAG最便宜，微调是一次性投入，长上下文要谨慎用。</p></div></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q3: RAG检索效果不理想的时候，你们会怎么优化？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>RAG优化我们走过一个完整的路径。最开始用纯向量检索，发现客户问"我的快递在哪"和"我的货到哪了"其实是同一个问题，但向量相似度不高，检索会漏。后来改成了混合检索——同时走稠密向量（语义理解）和稀疏向量（关键词匹配），两条路的结果合并，覆盖率提升了不少。</p><p>第二步加了Rerank。粗召回Top-20之后，用一个轻量模型做二次排序，把最相关的排到前面。Rerank对语音场景特别重要，因为ASR转出来的文本可能有误差，直接用向量相似度排序不太靠谱。</p><p>第三步做了Query改写。用户问"上次那个件"，模型不知道"上次"和"那个"指什么。我们在检索前加了一步——用LLM把用户的模糊表述扩展成明确的查询语句，比如把"上次那个件"改写成"运单号XXX的货物"（从上下文提取运单号）。</p><div class="follow"><p><b>→ Rerank用的是Cross-Encoder还是Bi-Encoder？</b></p><p>Cross-Encoder。虽然慢一点，但精度高。Bi-Encoder适合粗召回，Cross-Encoder适合精排。我们的Rerank模型大概100ms能排20个文档，延迟可以接受。</p><p><b>→ Query改写是每次都做吗？</b></p><p>不是。只有检测到query里有指代词（"那个"、"上次"）、时间模糊词（"最近"）、或者语义不完整时，才触发改写。完整明确的query直接走检索，省掉改写这一步的延迟。</p></div></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q4: 多Agent协作有哪些模式？跨越速运是怎么做的？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>两种主流模式。中心化模式是一个主Agent负责调度，多个子Agent负责执行——主Agent分析用户意图，决定调用哪个子Agent。去中心化模式是Agent之间直接通信，比如A2A协议，每个Agent既是服务提供者也是消费者。</p><p>跨越速运用的是"共享服务"模式，更接近中心化。底层能力（RAG、记忆、Prompt模板）封装成MCP Server，所有业务Agent共享。好处是能力复用、统一管理；坏处是如果底层服务挂了，所有Agent都受影响。</p><div class="follow"><p><b>→ A2A协议和MCP有什么区别？</b></p><p>A2A是Agent之间的通信协议，MCP是Agent和工具之间的协议。A2A解决的是"Agent A怎么调用Agent B"，MCP解决的是"Agent怎么调用RAG检索"。两者不冲突，可以一起用。</p><p><b>→ 多Agent通信的延迟怎么解决？</b></p><p>同步调用链太长的话延迟会累积。我们的做法是：语音客服这种对延迟敏感的用本地编排，不走网络；LangGraph异常处理这种异步场景走HTTP调用，延迟不敏感。底层MCP Server部署在同一可用区，内网通信延迟在10ms以内。</p></div></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q5: 物流客服场景下，怎么控制模型幻觉？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>四层防护。第一层是RAG限制——所有产品知识必须从RAG检索结果里来，不允许模型凭记忆瞎编。我们在Prompt里明确写了"如果你不知道，就说不知道，不要猜测"。第二层是Tool验证——模型生成的运单号、手机号必须调用验证接口确认存在，不存在就拒绝回复。第三层是结构化输出——让模型输出JSON而不是自由文本，限制它的发挥空间。第四层是人工兜底——高风险操作（比如修改地址、发起赔付）必须人工确认。</p><div class="follow"><p><b>→ 有没有发生过比较严重的幻觉事故？</b></p><p>有一次模型把"预计明天到达"说成了"明天一定到达"，结果第二天因为天气原因延误了，客户非常生气。后来我们发现是因为Prompt里的措辞不够严谨，模型学会了用"一定"这种绝对化表述。修复方案是在Prompt里加了语气约束——"描述时效时用'预计'，不要用'一定'、'肯定'"。</p><p><b>→ 结构化输出和自由文本的效果差距大吗？</b></p><p>在客服场景里，结构化输出的可控性明显更好，但自然度稍差。比如自由文本可以说"您的快递预计明天到达，建议您保持电话畅通"，结构化输出可能变成冷冰冰的JSON字段。我们的折中方案是：内部处理用结构化，最终回复时再用模板渲染成自然语言。</p></div></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q6: AI系统的可观测性怎么做的？和传统系统有什么区别？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>AI系统的可观测性比传统系统多了一个维度——"模型在想什么"。传统系统看日志就知道哪里出错了，AI系统可能日志里一切正常，但模型输出了胡说八道的内容。</p><p>我们做了四层。第一层是LangSmith追踪，记录每次LLM调用的输入输出、Token消耗、延迟。第二层是结构化日志（structlog），每条日志带request_id，全链路可追踪。第三层是指标监控——意图识别准确率、幻觉率、客户满意度，这些业务指标比系统CPU内存更重要。第四层是成本追踪——每个Agent每天花多少Token、多少钱，超出预算告警。</p><div class="follow"><p><b>→ structlog和Python自带的logging有什么区别？</b></p><p>structlog输出的是结构化JSON，方便机器解析和检索。Python logging默认是文本，想从日志里提取字段很麻烦。我们所有服务统一用structlog，日志直接打到ELK里，排查问题时可以用Kibana做过滤。</p><p><b>→ Trace采样率怎么设的？全量采集成本太高了吧？</b></p><p>错误请求100%采集，成功请求10%采样。这样既不会漏掉错误，又能控制成本。LangSmith本身也有配额限制，我们按团队分配额度，超了就降级到自研的简易追踪。</p></div></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q7: 做AI项目时，大模型选型会考虑哪些维度？跨越速运是怎么选的？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>四个维度。延迟——客服场景TTFT必须控制在3秒以内，简单任务走轻量模型。成本——每天几十万次调用，Token单价差一分钱，月成本就差几万。推理能力——复杂异常处理需要强推理能力，简单查询用轻量模型就够了。上下文长度——有些场景需要带长历史对话，要求上下文窗口足够大。</p><p>跨越速运的策略是"分层路由"。简单意图走doubao-lite，延迟低成本低；复杂意图走doubao-pro，推理能力强。不追求用一个模型解决所有问题，而是按场景分配资源。</p><div class="follow"><p><b>→ 不同厂商的模型怎么对比？</b></p><p>用评测集跑分。我们建了一个中立的评测平台，同一套评测集在多个模型上跑，对比延迟、成本、准确率三个指标。选模型不是选最好的，是选"满足质量要求的前提下成本最低"的。</p><p><b>→ 上线前会做A/B测试吗？</b></p><p>会。小流量5%跑一周，对比新旧模型的业务指标。不仅看准确率，还要看客户满意度、对话轮数、问题解决率。有一次新模型准确率提升了2%，但客户满意度反而下降了，后来发现是因为新模型回复太啰嗦，客户不耐烦。</p></div></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q8: Token成本优化有哪些手段？在跨越速运的体量下效果如何？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>五个手段。模型路由——简单问题走轻量模型，成本差10倍。Prompt精简——System Prompt从800token压到200token，Prefix Caching命中率从40%提升到75%。Max Token分级——不同场景给不同的输出上限，避免浪费。RAG片段压缩——检索结果去掉无关段落，只保留核心句子。缓存——常见问题的回答直接走缓存，不走模型。</p><p>综合下来，单请求平均Token消耗降低了60%，月度成本从15万降到6万左右。关键是这些优化都没有牺牲质量——路由错误率控制在5%以内，Prompt精简后评测分数基本持平。</p><div class="follow"><p><b>→ 成本降了60%，对回复质量有影响吗？</b></p><p>评测指标没有明显下降，但有个隐性影响——Prompt精简后，模型在某些边界case上的表现稍微弱了一点。我们在评测集里补充了更多边界case，确保精简后的Prompt覆盖度足够。</p></div></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q9: AI系统的安全和权限控制怎么做？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>四层防护。第一层API Key+配额——每个项目独立的Key，用完配额就限流，防止资源被耗尽。第二层project_id隔离——RAG检索、用户画像按项目隔离，A项目查不到B项目的数据。第三层Tool授权——不是每个Agent都能调用所有Tool，敏感操作比如"修改地址"需要额外授权。第四层高风险人工确认——赔付、退款这些操作，金额超过阈值必须人工确认。</p><p>Prompt层面也有防护——在System Prompt里加了安全约束，比如"不要生成代码"、"不要透露系统内部信息"、"不要回答与物流无关的问题"。</p><div class="follow"><p><b>→ 有没有遇到过越权访问的情况？</b></p><p>有一次测试环境的Agent误用了生产环境的API Key，好在测试环境的project_id和生产环境不一样，RAG检索返回空结果，没有造成数据泄露。后来我们加了环境隔离——不同环境的Key前缀不一样，代码里做了校验。</p><p><b>→ 怎么防止Prompt注入攻击？</b></p><p>输入过滤+输出校验。用户输入先过一层过滤，检测到疑似注入的关键词（比如"忽略之前的指令"）就告警。输出层再校验，如果模型回复包含了不应该出现的内容，就拦截并返回兜底话术。</p></div></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q10: 长对话场景下上下文怎么管理？
+<span class="diff d2">⭐⭐</span>
+<span class="arrow">▶</span>
+</div>
+<div class="qa-a">
+<p>三层管理。短期记忆存最近N轮对话，存在Redis里，TTL 30分钟。N根据场景动态调整——客服场景N=10，因为用户一般不会连续问太多问题；导购场景N=20，因为用户可能会反复比较不同产品。</p>
+<p>超过N轮的历史做摘要压缩。用LLM把前面的对话提炼成关键信息——用户问了什么、我们回答了什么、有没有待办事项。摘要和最近的N轮一起送给模型，这样上下文不会无限增长。</p>
+<p>长期画像存用户的偏好和历史行为，比如"这个客户经常投诉延误"、"这个客户偏好改配送到自提点"。画像不是每次对话都全量加载，而是按需查询——当前对话涉及到相关话题时才加载。</p>
+<div class="follow">
+<p><b>→ N具体怎么确定？</b></p>
+<p>看历史数据统计。分析客服对话的平均轮数，取90分位数。跨越速运的客服对话90%在8轮以内结束，所以N=10足够覆盖绝大多数场景。</p>
+<p><b>→ 摘要压缩会不会丢失关键信息？</b></p>
+<p>会。有一次摘要把"客户要求加急"这个信息漏掉了，导致后续回复没有体现加急处理。后来我们在摘要模板里加了关键字段检查——必须包含"诉求"、"情绪"、"待办"三个字段，缺少任何一个就告警。</p>
+</div>
+</div>
+</div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q11: 多Agent协作中任务是怎么分解和分配的？跨越速运怎么做的？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>任务分解和分配是多Agent协作的核心问题。主流有三种模式：静态路由——每个Agent负责固定领域，比如Agent A管查轨迹、Agent B管改地址、Agent C管投诉，由路由器根据用户意图分发；动态规划——由一个主Agent（Orchestrator）分析任务复杂度，动态拆分子任务并分配给不同子Agent，子Agent完成后结果汇总；竞争选举——多个Agent同时处理同一个任务，选一个最好的结果返回。</p><p>跨越速运用的是静态路由+动态规划的混合。日常高频场景（查轨迹、问时效）走静态路由，意图识别后直接分给对应的Agent，延迟最低。复杂场景（比如"我的货延误了，帮我查一下原因再改个地址"）走动态规划，由主Agent拆成"查轨迹→分析延误原因→改地址"三个子任务，分别调用不同的子Agent，最后汇总结果生成统一回复。</p><div class="follow"><p><b>→ 子任务之间如果有依赖关系怎么办？</b></p><p>用DAG（有向无环图）描述依赖。比如"改地址"依赖"查轨迹"的结果（需要知道当前货物在哪才能判断能不能改地址），这两个任务就不能并行。主Agent在拆任务时会构建依赖图，按拓扑序执行。LangGraph的State机制很适合管这种依赖——每个子任务读写共享State，下游任务从State里读取上游结果。</p><p><b>→ 子任务执行失败了怎么回滚？</b></p><p>失败的子任务不会让整个流程崩掉，而是标记为失败并返回错误原因。主Agent根据错误类型决定：如果是临时错误（网络超时）就重试；如果是业务错误（地址不存在）就跳过该子任务，在最终回复里告知用户哪些操作完成了、哪些没完成。</p></div></div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q12: 多Agent之间怎么共享记忆/状态？共享和独立怎么平衡？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>多Agent的记忆分三层。第一层是<strong>全局共享状态</strong>——所有Agent都能读写的公共数据，比如当前对话的上下文、用户的运单号、已经确认过的地址。这层存在Redis里，TTL 30分钟，确保所有Agent看到的信息是一致的。第二层是<strong>Agent私有状态</strong>——每个Agent自己的中间结果，比如RAG Agent检索到的文档列表、代码生成Agent写的草稿代码。这层只在Agent内部流转，不共享。第三层是<strong>持久画像</strong>——用户的历史偏好和行为标签，存在PostgreSQL里，按需加载。</p><p>平衡的原则是"能私有不共享，必须共享才共享"。共享状态多了会引入竞争条件和一致性问题，而且如果一个Agent写错了数据，会影响所有下游Agent。所以设计上尽量让Agent通过输入参数传递数据，而不是读写共享变量。只有跨对话必须保留的信息（如用户身份、当前运单号）才放进共享状态。</p><div class="follow"><p><b>→ 共享状态的并发写怎么解决？</b></p><p>用乐观锁。每个共享状态带一个version字段，Agent写入时检查version是否和读取时一致，不一致说明被其他Agent修改过了，需要重新读取再处理。LangGraph的Checkpointer本身有状态版本管理，天然支持这种冲突检测。</p><p><b>→ 不同Agent的上下文窗口都带全量历史吗？</b></p><p>不带。每个Agent只收到和它相关的上下文片段。比如改地址Agent只收到"用户要求改地址"和"当前地址"，不会收到之前查轨迹的详细结果。这样既能节省Token，又能避免无关信息干扰Agent的判断。</p></div></div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q13: 多Agent协作出现冲突怎么办？比如两个Agent给出矛盾的结果。<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>冲突有三种典型场景。第一种是<strong>事实冲突</strong>——Agent A说货物在北京，Agent B说货物在上海。解决方式是引入事实校验层，关键事实（如货物位置、运单状态）必须调用业务系统API确认，不以Agent的推理结果为准。第二种是<strong>策略冲突</strong>——Agent A建议赔付200元，Agent B建议赔付500元。解决方式是上层仲裁——由规则引擎或人工复核做最终决策，Agent只负责提供建议。第三种是<strong>资源冲突</strong>——两个Agent同时想修改同一个订单的状态。解决方式是加锁——修改前获取分布式锁，修改完释放。</p><p>我们在LangGraph里设计了"评审节点"——多个Agent并行输出结果后，由一个评审Agent（或规则引擎）做一致性检查。如果发现冲突，按优先级排序：业务系统数据 > 规则引擎 > 主Agent > 子Agent。最终输出必须明确标注数据来源，不确定的信息用"可能""建议"等措辞，避免给用户绝对化的承诺。</p><div class="follow"><p><b>→ 评审Agent本身会不会出错？</b></p><p>会。所以评审结果只用于提示风险，不直接阻断流程。高风险冲突（如赔付金额差异超过1000元）必须人工复核；低风险冲突（如预计到达时间差半天）由评审Agent自动裁决并记录日志，后续人工抽查。</p><p><b>→ 怎么减少冲突的发生？</b></p><p>三个手段：一是职责边界清晰，每个Agent的Prompt里明确写"你只负责XXX，不要越界判断YYY"；二是数据源统一，所有Agent查货物状态都走同一个API，不从各自的记忆里瞎编；三是输入标准化，给每个Agent的上下文格式统一，减少理解偏差。</p></div></div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q14: 多Agent架构和单体Agent（Single Agent）的选型边界是什么？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>单体Agent适合任务单一、流程明确的场景——比如语音客服查轨迹，意图识别后直接调RAG检索，一个Agent就能搞定。多Agent适合任务复杂、需要多领域协作的场景——比如跨境合规审查，涉及单据解析、HS编码归类、规则审查、补单生成，每个子任务的专业性要求不同，用一个Agent做所有事效果会很差。</p><p>选型看三个指标：任务复杂度——如果任务能拆成3个以上独立的子任务，且子任务之间专业差异大，考虑多Agent。延迟敏感度——多Agent有通信开销，对TTFT要求<1秒的场景不适合。维护成本——多Agent的调试和评测更复杂，团队人手有限时优先单体Agent。</p><p>跨越速运的实践中，语音客服和在线客服是单体Agent（延迟敏感、任务相对简单），合规中台是多Agent（任务复杂、涉及多个专业领域），MCP集群是多Agent共享底层服务（多个业务Agent复用RAG、记忆等能力）。</p><div class="follow"><p><b>→ 多Agent的通信开销有多大？</b></p><p>内网HTTP调用大概10-50ms，加上模型推理时间，一个3-Agent的协作链路总延迟大概在500ms-2秒。对异步场景（如合规审查）完全可接受，对实时场景（如语音客服）就需要权衡——要么合并Agent减少调用次数，要么用流式输出先给用户部分反馈。</p><p><b>→ 从单体Agent演进到多Agent的触发条件是什么？</b></p><p>通常是单体Agent的Prompt超过2000token、或者准确率遇到瓶颈、或者团队里有不同角色负责不同模块时。Prompt太长说明一个Agent承担了太多职责，拆成多个Agent每个Prompt更聚焦，效果往往更好。</p></div></div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q15: Redis在AI系统里做什么？为什么选Redis而不是PostgreSQL/MongoDB？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>跨越速运的项目里Redis主要做三件事。第一是<strong>短期会话记忆</strong>——用户和客服Agent的对话历史存在Redis里，按session_id隔离，TTL 30分钟。用户连续提问时，Agent从Redis里读出历史上下文拼进Prompt，保证对话连贯。第二是<strong>缓存</strong>——常见问题的RAG检索结果和LLM生成结果走Redis缓存，命中率高的时候能省掉大量Token成本。第三是<strong>限流和分布式锁</strong>——MCP网关用Redis做API配额限流，多Agent场景用Redis分布式锁防止资源冲突。</p><p>选Redis而不是PG/MongoDB的核心原因是<strong>延迟</strong>。会话记忆每次对话都要读写，Redis单节点延迟在1ms以内，PG即使走索引也要10ms以上，对话轮数多了差距很明显。而且Redis的TTL机制天然适合短期记忆——超过30分钟没新消息自动清掉，不用写定时任务。</p><p>PG负责长期画像和LangGraph Checkpointer这些需要持久化和事务支持的数据。MongoDB我们也考虑过，但团队对Redis更熟悉，且Redis的Sorted Set很适合做带过期时间的排行榜类需求（比如热门问题统计），所以没上MongoDB。</p><div class="follow"><p><b>→ Redis挂了怎么办？记忆会丢吗？</b></p><p>Redis挂了短期记忆会丢，但设计上这不是致命问题。Redis只是加速层，丢了之后用户再发消息，Agent会把当前消息当新对话处理，不会崩。我们在Redis前加了本地Caffeine缓存做二级缓存，Redis挂了的短时间内（比如几秒），本地缓存还能撑一下。同时有哨兵模式做高可用，故障切换在10秒以内。</p><p><b>→ TTL 30分钟怎么定的？</b></p><p>看客服对话的间隔分布。统计发现95%的用户在两轮对话之间的间隔不超过20分钟，30分钟能覆盖绝大多数场景。设太短用户去喝杯咖啡回来上下文就丢了；设太长内存占用高。30分钟是平衡后的结果。</p><p><b>→ Redis和PG的数据一致性怎么保证？</b></p><p>短期记忆和长期画像互相独立，没有强一致性问题。对话结束后的画像更新是异步的——从Redis里读出完整对话，用LLM提取关键信息，然后UPSERT到PG。如果UPSERT失败会进死信队列，人工排查后重试。不要求实时一致，最终一致即可。</p></div></div></div>
+
+</section>
+</div>
+<div class="tab-content" id="tab-rag">
+<section id="rag">
+<h2>RAG 检索增强专题（高频面试题）</h2>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【架构类】RAG的完整流程是什么？每个组件有哪些选型？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>标准RAG流程分三个阶段：<b>Indexing（索引）→ Retrieval（检索）→ Generation（生成）</b>。</p><p><b>Indexing阶段</b>：文档加载→ Chunk切分→ Embedding向量化→ 存入向量库。选型要点：chunk大小（256-1024 tokens）、overlap（10-20%）、Embedding模型（BGE/M3E/Ada）、向量库（pgvector/Milvus/Pinecone）。</p><p><b>Retrieval阶段</b>：Query Embedding→ 向量检索→ 可选Rerank→ 返回Top-K。选型要点：检索方式（纯向量/混合/Hybrid）、Top-K（3-10）、Rerank模型（Cross-Encoder精度高但慢）。</p><p><b>Generation阶段</b>：检索结果+Query拼Prompt→ LLM生成。关键：Prompt约束"只基于检索结果回答"、检索为空时的降级策略。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【架构类】RAG vs Fine-tuning vs Long Context，三者的选型原则？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三者不是互斥的，最佳实践是组合使用。<b>RAG管动态知识</b>——适合频繁变化的信息，改知识库即可生效、可追溯、成本低。<b>Fine-tuning管风格</b>——适合内化沟通风格和领域术语理解，但知识更新需重新训练。<b>Long Context管一次性大文档</b>——适合单次处理超长文档，但有Lost in the Middle问题、成本随长度平方增长。选型口诀：<b>动态知识用RAG，静态风格用微调，一次性大文档用长上下文。</b></p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【分块策略】Chunk大小怎么定？固定切分 vs 语义切分 vs 层级切分？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>固定大小</b>：按固定token数+overlap切，简单快但可能切断语义，推荐256-512 tokens。<b>语义切分</b>：按自然语义边界（段落/句子）切，不破坏完整性但chunk大小不均。<b>层级切分</b>：按文档结构层级切并保留层级关系，宽泛查询用高层级chunk、精确查询用低层级chunk。建议优先语义或层级切分，固定大小作为兜底。Overlap推荐10-20%。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【检索策略】稠密向量 vs 稀疏向量 vs 混合检索怎么选？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>稠密向量</b>：Embedding映射语义空间，理解同义表达但精确匹配弱。<b>稀疏向量</b>：BM25关键词精确匹配强但不理解语义。<b>混合检索（Hybrid Search）</b>：两条路并行，RRF合并结果，两者互补。我们的实践：物流场景既有语义查询又有精确查单号，混合检索效果比纯向量好很多。通用场景优先混合检索，weight配比根据场景动态调整。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【检索策略】Query改写/转换有哪些方法？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>Query扩展</b>：LLM生成同义表达，多条检索后合并。<b>Query重写</b>：把模糊Query改写成明确的检索Query，适合对话中带指代的场景。<b>HyDE</b>：先生成假想理想文档并用其向量检索，适合极短Query但延迟高。我们只在检测到指代词/时间模糊词时才触发改写，完整Query直接检索省掉改写延迟。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【检索策略】Rerank为什么重要？Cross-Encoder vs Bi-Encoder？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>Cross-Encoder</b>：Query+候选文档拼接输入判相关性，精度最高但慢（50-150ms/对）。<b>Bi-Encoder</b>：各自编码后余弦相似度排序，快但精度提升有限。我们选Cross-Encoder——语音ASR转写常有误差，Cross-Encoder能更好处理语义匹配。粗召回Top-20，Rerank精排取Top-5。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【向量库选型】pgvector vs Milvus vs Pinecone vs Qdrant？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>pgvector</b>：PostgreSQL插件，零额外运维，适合百万级以内。我们早期方案。<b>Milvus</b>：专业向量库支持千亿级但需自建集群运维成本高。<b>Pinecone</b>：托管SaaS零运维。<b>Qdrant</b>：Rust高性能，可自托管也可云。我们最终选Viking DB（火山引擎），核心原因是和豆包生态打通好、运维托管不操心。技术选型不只看性能，还要看生态集成和团队熟悉度。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【高级RAG】什么是Agentic RAG？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>标准RAG是"一次检索+一次生成"的直线流程。Agentic RAG把RAG嵌入Agent推理循环——Agent自主决定是否需要二次检索、调用工具、改写Query。关键区别在于<b>迭代和决策能力</b>。适合多步推理查询（"这个产品去德国需要什么认证"→先查分类→再查法规→再查认证）。劣势是延迟高、成本高、调试复杂。单步简单查询用标准RAG就够了。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【高级RAG】什么是Graph RAG？和向量RAG的区别？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>向量RAG做语义相似度匹配，擅长"找相关内容"但不擅长跨文档链式推理。Graph RAG把实体和关系建模为知识图谱，做图遍历查询。优势是<b>链式推理和可解释性</b>，但构建成本高（需要专家梳理实体关系Schema、LLM抽取需人工校验）。我们的Phase 2规划引入Graph RAG做链式推理，Drools做最终决策执行。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【高级RAG】Self-RAG和Corrective RAG是什么？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>Self-RAG</b>：模型生成时自我反思——检索结果是否相关、是否支持生成、生成内容有多少来自检索。用反思Token控制生成过程。<b>Corrective RAG（CRAG）</b>：检索后评估相关性，质量低时触发纠错——改写重试、WebSearch补充、或降级到模型自身知识。我们在P1容灾中的RAG降级策略和CRAG思路一致。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【评估】RAG检索质量怎么评估？指标有哪些？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>检索层面</b>：Hit Rate（是否命中）、MRR（首条命中的排序位置）、NDCG（带权重排序质量）、Recall@K（Top-K覆盖度）。计算成本低，适合日常监控。<b>生成层面</b>：Faithfulness（忠实度/幻觉率）、Answer Relevance（相关性）、Context Precision（上下文精确度）。可用LLM-as-a-Judge打分。我们参考了RAGAS框架的Faithfulness指标设计。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【工程实践】Embedding模型怎么选？领域微调有必要吗？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>选型看MTEB/BEIR评测、向量维度、最大输入长度、语言支持。我们早期用BGE-zh，后来领域微调后命中率从72%→89%（5000对正负样本，RTX 4090 2h）。但领域微调不是必需的——通用模型hit rate > 90%就不需要额外微调。判断标准：在领域测试集上跑hit rate，低于85%才考虑微调。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【工程实践】RAG缓存策略怎么设计？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>两层缓存：<b>检索结果缓存</b>（Redis存Query Embedding→Top-K文档ID，TTL按知识库更新频率设5min-1h，命中率30-40%）；<b>生成结果缓存</b>（语义相似度匹配，命中率15-20%，仅适用静态知识场景）。对时效敏感的场景（查轨迹）只缓存检索不缓存生成，对静态知识场景（政策说明）做双层缓存。</p></div></div>
+</section>
+</div>
+<section id="bg">
+<h2>背景常备题</h2>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q1: 能介绍一下跨越速运吗？你们AI团队主要服务什么业务？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>跨越速运是国内大型的零担物流企业，主要是To B的——客户是企业而不是个人，给企业客户提供限时达的物流服务。公司规模挺大的，6万多员工，3万多台车，3000多个网点覆盖全国。</p><p>我们AI团队主要服务客服和业务运营两个方向。客服方向做了语音客服和在线客服，处理客户查轨迹、改地址、投诉理赔这些高频需求。业务运营方向做了智能导购和内容运营，帮助销售团队更高效地服务客户。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q2: 你之前是后端开发，后来转做AI应用，这个转型是怎么发生的？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>其实是个渐进的过程。我做了很多年后端开发，对系统架构、高并发、数据建模这些比较熟悉。后来公司开始布局AI，需要有人把AI能力工程化——不只是调API，而是搭建一套稳定、可扩展的AI系统。</p><p>我发现后端开发的很多经验在AI工程里同样重要。比如语音客服的TTFT优化，本质上是性能优化；MCP集群的多租户隔离，本质上是权限架构设计；LangGraph的状态持久化，本质上是分布式系统的状态管理。这些恰恰是后端工程师的强项。</p><p>转型过程中我也补了很多AI相关的知识——大模型的基本原理、微调的流程、RAG的检索策略。但核心优势还是工程能力，把AI能力落地成稳定的产品。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q3: 你们的技术栈选型是怎么考虑的？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>选型的核心原则是"成熟+有生态+团队能hold住"。语音客服选火山引擎，是因为公司已经在用它的ARK API，ASR/TTS和LLM在同一个生态里，联调成本低。MCP选它是因为它是协议层，标准化程度高，多家厂商支持，不会被某一家绑定。LangGraph选它是因为它是目前Agent工作流里最成熟的框架，Human-in-the-Loop和Checkpointer都是刚需。部署选阿里云Serverless是因为团队对阿里云比较熟悉，弹性伸缩能省运维人力。</p><p>没有追新。比如A2A协议我们也看了，但觉得生态还不够成熟，暂时观望。技术选型不是选最潮的，是选最稳的。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q4: 能介绍一下你们AI团队的规模和分工吗？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>团队不大但很精干。我是AI应用开发工程师，主要负责架构设计和技术选型——从需求分析到技术方案，再到核心模块的实现和代码Review。另外有两个算法工程师负责模型训练和微调，一个前端工程师负责运营后台，一个测试工程师负责自动化评测。</p><p>我主导的5个项目都是从0到1的。语音客服、大模型微调、MCP集群、LangGraph异常处理、Agent Harness，都是我从需求调研、方案设计、技术选型、核心开发到上线运营全程跟下来的。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q5: 你觉得自己遇到的最有挑战的技术问题是什么？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三个问题印象比较深。第一个是语音客服的TTFT优化——从15秒压到2秒。这个不是单一优化点能解决的，需要把ASR、LLM、TTS三个环节逐个压一遍，每个环节抠几百毫秒。LLM环节最费劲，Prefix Caching和KV Cache的调优花了一周多。</p><p>第二个是多租户隔离和资源复用的平衡。业务团队希望完全隔离，但完全隔离意味着资源利用率低、成本高。最后设计了"逻辑隔离+物理共享"的方案——RAG用Collection前缀隔离，记忆用user_id+project_id隔离，但底层物理存储共享。</p><p>第三个是微调数据的质量筛选。原始数据1000多条，清洗完只剩200条，筛选标准太严导致数据量不够，标准太松又影响模型质量。最后用了LLM多维度评分+人工抽检的方式，在质量和数量之间找平衡点。</p></div></div>
+</section>
+<section id="probes">
+<h2>追问清单（面试前速查，含应答话术）</h2>
+<div style="background:#fff3e0;padding:12px 16px;border-radius:6px;margin-bottom:15px;font-size:13px;color:#e65100;">以下是从所有项目梳理出的 <b>高危追问点</b>，每个都附有一句防御话术，面试前建议快速过一遍。</div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P1 语音客服 — 数字类 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>日均几万通？峰值多少？怎么统计的？</b><br/><span style="color:#2e7d32;">答：日均3-4万通，双11峰值6万通。数据来自CTI系统话务报表，按自然日聚合。</span></li>
+<li><b>TTFT从15s到2s，各环节分别贡献了多少？</b><br/><span style="color:#2e7d32;">答：LLM推理优化贡献约10s（Prefix Caching 5s + KV Cache合并 3s + 模型路由 2s），ASR流式优化约2s，TTS流式优化约1s。</span></li>
+<li><b>ASR准确率95%→97%，测试集多大？</b><br/><span style="color:#2e7d32;">答：句准确率，测试集500条人工标注对话，覆盖12个高频意图。</span></li>
+<li><b>单请求成本降低30%，月度总成本变化？</b><br/><span style="color:#2e7d32;">答：优化前月均Token成本约15万，优化后约6万。对比基准是每次对话的平均Token消耗。</span></li>
+<li><b>QPS-Token API成本优化8%，这个数字怎么算的？</b><br/><span style="color:#2e7d32;">答：对比优化前后同QPS下的Token消耗，主要是Max Token分级控制+模型路由减少pro模型调用量。</span></li>
+<li><b>Max Token 95%覆盖率边界怎么分析的？</b><br/><span style="color:#2e7d32;">答：拉了历史一个月对话日志，统计每轮输出token分布，取95分位数作为上限。不同场景（查轨迹/投诉）分别统计。</span></li>
+<li><b>你之前8年iOS/App开发，转AI适应了多久？转型最大的挑战是什么？</b><br/><span style="color:#2e7d32;">答：渐进转型。后端架构（高并发/性能优化/分布式状态管理）的经验在AI工程里同样适用。补了模型原理和RAG/Agent这些AI特有知识，大概3个月上手。</span></li>
+<li><b>为什么简历上写"读源码、造轮子"？能举一个具体的例子吗？</b><br/><span style="color:#2e7d32;">答：比如Prefix Caching优化时读了vLLM和SGLang的源码理解PagedAttention实现，然后参考思路自建了适合我们场景的KV Cache管理方案。不是直接搬运，是理解了原理后做适配。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P1 语音客服 — 技术选型类 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>为什么选火山引擎RTC？对比过阿里云/腾讯云吗？</b><br/><span style="color:#2e7d32;">答：对比过。火山的声音复刻效果最好，且公司已在用豆包ARK API，生态统一联调成本低。</span></li>
+<li><b>状态机+LLM混合架构，纯LLM试过吗？效果差多少？</b><br/><span style="color:#2e7d32;">答：试过纯LLM，流程失控率约15%， unacceptable。混合架构失控率低于2%。</span></li>
+<li><b>HNSW_HYBRID混合检索，为什么不用纯向量？</b><br/><span style="color:#2e7d32;">答：纯向量对物流专有名词效果不好，混合检索能兼顾语义理解和关键词精确匹配。</span></li>
+<li><b>dense_weight动态平衡怎么实现的？</b><br/><span style="color:#2e7d32;">答：通过Metadata标签自动识别场景。查轨迹需要精确匹配运单号时调高稀疏向量权重，问时效等语义场景调高稠密向量权重。后台配场景-权重映射表。</span></li>
+<li><b>Prompt Pilot是什么？和MCP Prompt原语什么关系？</b><br/><span style="color:#2e7d32;">答：Prompt Pilot是P1内部的Prompt管理工具，每个Prompt配评测集，改后自动跑分对比。MCP Prompt原语是P3统一后的方案，更标准化。</span></li>
+<li><b>Prometheus + Grafana监控了什么指标？</b><br/><span style="color:#2e7d32;">答：三大类：系统指标（ASR/TTS/LLM各环节延迟、QPS、错误率）、业务指标（意图分布、转人工率、客户满意度）、成本指标（Token消耗、模型调用量）。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P1 语音客服 — 架构设计类 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>状态机15个状态，新增一个要改多少代码？</b><br/><span style="color:#2e7d32;">答：新增状态就是加一行YAML配置，不改代码。状态表Git管理，CI阶段有配置校验脚本。</span></li>
+<li><b>五层架构依赖关系？检索失败怎么降级？</b><br/><span style="color:#2e7d32;">答：RTC→引擎→RAG/缓存→工具，单向依赖。检索失败走通用知识兜底，LLM基于通用物流知识回答。</span></li>
+<li><b>SOP标准化具体指什么？</b><br/><span style="color:#2e7d32;">答：12个高频场景各自的处理流程标准化文档，包括对话流程、关联Tool、异常处理、转人工条件。每个SOP对应一份YAML配置，新场景上线先写SOP再开发。</span></li>
+<li><b>Max Token分级控制的具体策略？</b><br/><span style="color:#2e7d32;">答：分析95%覆盖率边界后分场景配置。查轨迹：推理1500/输出100；投诉处理：推理1000/输出300。推理不够模型理解不准，输出不够回复被截断，两者需要平衡。</span></li>
+<li><b>PDA物流终端怎么接入语音系统？和普通电话有什么区别？</b><br/><span style="color:#2e7d32;">答：PDA通过定制SDK接入RTC层，差异主要在仓库/高速等弱网环境和单手操作场景。针对PDA做了更激进的降噪和FEC参数调优。</span></li>
+<li><b>OPEX 60%+用在AI上，这个数据怎么来的？</b><br/><span style="color:#2e7d32;">答：公司运营支出中人工客服成本占60%以上。AI上线后简单查询类电话自动处理，人工转向处理复杂投诉。ROI看两个维度：节省的人力成本+客户满意度变化。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P2 微调 — 数字类 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>Embedding命中率72%→89%，测试集多大？</b><br/><span style="color:#2e7d32;">答：测试集500对正负样本，覆盖物流客服高频查询场景。</span></li>
+<li><b>1000→200条数据，筛选比例？标准太严怎么办？</b><br/><span style="color:#2e7d32;">答：筛选比例约20%。后来改用LLM多维度评分+人工抽检，在质量和数量之间找平衡。</span></li>
+<li><b>QLoRA rank=64怎么确定的？</b><br/><span style="color:#2e7d32;">答：本地用RTX4090试了32/64/128几个值，rank=64在效果和推理效率之间最平衡。</span></li>
+<li><b>SFT评分2.1→4.35（简历写3.5→4.2，哪个准确？）</b><br/><span style="color:#2e7d32;">答：2.1→4.35是完整SFT+DPO后的全局评分（5分制），3.5→4.2是仅做SFT后到加DPO的增量提升。两个数据对应不同比对阶段，不矛盾。</span></li>
+<li><b>为什么选Qwen2.5-3B-Instruct而不是更大的模型？</b><br/><span style="color:#2e7d32;">答：7B推理延迟高快一倍，3B在客服场景已经够用。延迟优先于上限——客服对延迟敏感，模型能力够用就行。</span></li>
+<li><b>云端训练1.5小时具体配置？</b><br/><span style="color:#2e7d32;">答：火山引擎方舟平台，豆包1.5底座，LoRA rank=32, lr=1e-5, batch size=16, 2-3小时。本地RTX 4090 QLoRA 40分钟验证完才上云。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P2 微调 — 技术选型与架构 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>为什么选Qwen2.5-3B？对比过7B吗？</b><br/><span style="color:#2e7d32;">答：对比过。7B推理慢一倍，3B在客服场景效果已足够，性价比更好。</span></li>
+<li><b>SFT→DPO，为什么不用RLHF？</b><br/><span style="color:#2e7d32;">答：RLHF训练成本高（需要训练Reward Model），DPO在风格对齐上效果足够且更快。</span></li>
+<li><b>"微调管风格、RAG管知识"边界怎么划分？</b><br/><span style="color:#2e7d32;">答：风格内化到模型参数，知识放RAG动态更新。如果训练数据混入产品知识，模型会过时。</span></li>
+<li><b>全量微调vs LoRA怎么选？什么场景用哪种？</b><br/><span style="color:#2e7d32;">答：资源充足+数据量大有新能力需求选全量微调；单卡+数据量小+风格调整选LoRA。我们本地QLoRA验证后上云端LoRA训练。</span></li>
+<li><b>过拟合怎么判断和处理？</b><br/><span style="color:#2e7d32;">答：训练loss降但验证loss升就是过拟合。处理：数据增强、增大LoRA dropout、早停、减少epoch或rank。200条数据10epoch→5epoch+dropout后改善明显。</span></li>
+<li><b>灾难性遗忘怎么防？</b><br/><span style="color:#2e7d32;">答：评测集保留20%通用能力case、rank别太大（64足够）、数据配比2:8（20%通用+80%领域）。</span></li>
+<li><b>多轮对话loss怎么算？</b><br/><span style="color:#2e7d32;">答：只算assistant回复部分token loss，user输入不贡献loss。decoder-only直接拼标准格式。</span></li>
+<li><b>Transformer Self-Attention为什么除以√d_k？</b><br/><span style="color:#2e7d32;">答：防止点积结果过大导致softmax梯度进入饱和区。除以√d_k把方差拉回1。</span></li>
+<li><b>Cross-Encoder重排序Pipeline具体怎么搭的？</b><br/><span style="color:#2e7d32;">答：粗召回Top-20（HNSW_HYBRID）→ Cross-Encoder精排→取Top-5。Cross-Encoder比Bi-Encoder慢但精度高，100ms排20个文档可接受。</span></li>
+<li><b>学习率lr=2e-4（本地QLoRA）vs lr=1e-5（云端LoRA）为什么差10倍？</b><br/><span style="color:#2e7d32;">答：QLoRA有4-bit量化的精度损失，需要更大学习率来弥补。云端LoRA是FP16训练，学习率更小更稳定。两张卡都各自调参找到的最优值。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P3 MCP集群 — 数字与技术 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>接入周期8周→2天，原来8周花在哪？</b><br/><span style="color:#2e7d32;">答：原来每个业务线重复建设LLM网关、RAG检索、会话记忆，MCP抽取共享后只需配接入参数。</span></li>
+<li><b>多租户隔离，为什么不做完全隔离？</b><br/><span style="color:#2e7d32;">答：完全隔离成本高。用Collection前缀+user_id逻辑隔离，底层物理存储共享，兼顾隔离和成本。</span></li>
+<li><b>为什么选MCP协议？</b><br/><span style="color:#2e7d32;">答：标准化协议，多家厂商支持，避免被单一厂商绑定。</span></li>
+<li><b>用了什么向量数据库？为什么选Viking DB而不是Milvus/pgvector？</b><br/><span style="color:#2e7d32;">答：Viking DB是火山引擎自研向量库，和豆包模型生态打通好，运维托管不操心。Milvus需要自建集群运维成本高。</span></li>
+<li><b>Markdown层级切分怎么做的？</b><br/><span style="color:#2e7d32;">答：按Markdown标题层级（##/###）切分chunk，保留标题层级关系做结构化召回。#商品信息→##价格→##规格，检索时优先匹配细粒度chunk。</span></li>
+<li><b>Stateless MCP + SIGTERM信号处理怎么设计的？</b><br/><span style="color:#2e7d32;">答：MCP Server不持有内存状态，所有状态写Redis/PG。收到SIGTERM先拒绝新请求，等进行中的请求处理完再退出，优雅关闭。</span></li>
+<li><b>检索准确率89%+，比之前提升多少？</b><br/><span style="color:#2e7d32;">答：统一MCP之前各业务自行搭RAG，准确率参差不齐（70-85%）。统一后通过标准化chunk策略+rerank pipeline，稳定在89%以上。</span></li>
+<li><b>MCP Server兼容OpenAI API格式吗？兼容到什么程度？</b><br/><span style="color:#2e7d32;">答：兼容。LLM网关MCP Server暴露了OpenAI兼容的/v1/chat/completions接口，已有OpenAI SDK的Agent改一下base_url就能接入。但MCP原生Tool Discovery和Prompt原语是额外能力。</span></li>
+<li><b>简历上60%和40%具体指什么？</b><br/><span style="color:#2e7d32;">答：60%是新业务接入后共享能力复用率（原来每个业务重复建设，现在60%的能力直接复用MCP Server），40%是单请求响应时间优化（统一网关+缓存+Serverless弹性后平均延迟下降40%）。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P4 LangGraph — 数字与技术 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>人工审查3-5天→？错漏率12%→？</b><br/><span style="color:#2e7d32;">答：简单case现在1天内，复杂case仍需2-3天。错漏率从12%降到约3-5%。</span></li>
+<li><b>小额≤2000阈值怎么定的？</b><br/><span style="color:#2e7d32;">答：和财务、法务一起定的，平衡了客户体验（小额快速赔付）和资金安全（大额审批）。</span></li>
+<li><b>OCR印刷体97%、手写体85%，测试集？</b><br/><span style="color:#2e7d32;">答：印刷体500张面单，手写体200张签名/备注。手写体主要是签名，不影响核心字段。</span></li>
+<li><b>为什么选LangGraph？对比过Temporal吗？</b><br/><span style="color:#2e7d32;">答：LangGraph天然支持LLM决策节点和interrupt/resume，Temporal更适合确定性流程。</span></li>
+<li><b>规则审查混合架构，LLM会不会幻觉？</b><br/><span style="color:#2e7d32;">答：会。所以LLM只打标签提示风险，最终决策权在Drools规则引擎。</span></li>
+<li><b>Checkpointer存在哪？挂了怎么办？</b><br/><span style="color:#2e7d32;">答：PostgreSQL。每经过一个节点自动保存快照，服务重启后从快照恢复，不丢状态。</span></li>
+<li><b>SSE流式输出+astream_events怎么实现的？TTFT 8s→3s怎么优化的？</b><br/><span style="color:#2e7d32;">答：用LangGraph astream_events监听on_chat_model_stream事件，Token逐块推给前端ReadableStream。优化前等LLM完整输出再返回，优化后边生成边推送，首字延迟从8s降到3s。</span></li>
+<li><b>等等，P1说TTFT 15s→2s，这里又说8s→3s，两个TTFT分别指什么？</b><br/><span style="color:#2e7d32;">答：完全不同的系统。P1是语音客服的端到端TTFT（ASR→LLM→TTS全链路），这个是LangGraph单证中台的流式首字延迟（用户发消息到收到第一个回复字）。语音场景链路更长所以优化前15s，纯文本流式8s。</span></li>
+<li><b>HS编码归类用with_structured_output具体怎么实现的？</b><br/><span style="color:#2e7d32;">答：LLM输出用with_structured_output绑定Pydantic Schema（包含HS编码、置信度、归类依据三个字段），JSON Mode保证输出合法JSON。TikToken统计usage做成本追踪，检测到格式错误自动重试。</span></li>
+<li><b>LLM-as-a-Judge在评测中怎么用的？</b><br/><span style="color:#2e7d32;">答：用专门的评估模型（GPT-4或豆包pro）对Agent回复打分，维度包括准确性、完整性、合规性。比人工评测快但成本高，只在关键业务Agent上跑。与BLEU/ROUGE自动指标互补。</span></li>
+<li><b>Swagger UI + SlowAPI用来做什么？</b><br/><span style="color:#2e7d32;">答：Swagger UI给前端和关务团队提供API交互文档，可直接在浏览器调接口测流程。SlowAPI是自定义中间件，可模拟指定接口的延迟（500ms/2s/5s），测试前端超时处理和Loading状态。</span></li>
+<li><b>asyncio.gather + run_in_executor用来做什么？</b><br/><span style="color:#2e7d32;">答：多源单据解析时并行调用OCR/Excel/PDF解析器，asyncio.gather做协程并发，run_in_executor把CPU密集的OCR计算扔到线程池不阻塞事件循环。QPS提升明显。</span></li>
+<li><b>Mock测试怎么做？llm_mock/image_mock/checkpointer_mock各自测什么？</b><br/><span style="color:#2e7d32;">答：llm_mock模拟LLM返回固定JSON测流程分支；image_mock模拟OCR返回模拟面单数据；checkpointer_mock模拟Checkpoint持久化验证状态恢复。三配合可脱离真实AI服务跑全流程集成测试。</span></li>
+<li><b>Ngrok + Docker用来做什么？</b><br/><span style="color:#2e7d32;">答：本地Docker启动完整中台服务（LangGraph+Drools+PG+Redis），Ngrok暴露公网URL给关务团队提前试用验收，不需要等部署到测试环境。</span></li>
+<li><b>Token用量优化40%怎么做到的？MetricsContext是什么？</b><br/><span style="color:#2e7d32;">答：MetricsContext是自定义Context Manager，自动追踪每次LLM调用的prompt/response token、延迟、费用，写入LangSmith。优化靠Prompt精简+JSON Mode结构化输出减少冗余token。</span></li>
+<li><b>Thread-ID和TraceId怎么串联全链路？</b><br/><span style="color:#2e7d32;">答：LangGraph Thread-ID管流程实例维度，structlog Request-ID/TraceId管请求维度。两者拼接作为全链路追踪ID，LangSmith和日志都可以按此检索。</span></li>
+<li><b>错漏率12%和退单率15%是什么关系？两个数据不冲突吗？</b><br/><span style="color:#2e7d32;">答：不冲突。12%是单证内容错漏率（字段填错/缺失），15%是退单率（海关退回）。错漏是原因之一，还有HS编码归类错误、准入认证不全等原因导致退单。AI同时优化了这两个指标。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P5 Agent Harness — 数字与设计 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>开发周期2周→3天，原来2周花在哪？</b><br/><span style="color:#2e7d32;">答：原来花在需求反复确认、Prompt散落代码里反复试错、没有标准上线流程。</span></li>
+<li><b>红线90%/5%/3秒是框架门禁还是实例配置？</b><br/><span style="color:#2e7d32;">答：是跨越速运项目的实例配置。框架本身的通用门禁是Per-Phase四步走验证（编译/测试/功能/安全）。</span></li>
+<li><b>四层质量门禁分别管什么？</b><br/><span style="color:#2e7d32;">答：Layer1 Per-Task 2-Stage Review（Spec→Quality）→ Layer2 Per-Phase四步走→ Layer3冒烟测试→ Layer4业务评测红线。</span></li>
+<li><b>Per-Task 2-Stage Review，Stage 1没过能进Stage 2吗？</b><br/><span style="color:#2e7d32;">答：不能。Stage 1有HIGH priority问题就停在原地。先验做对了再验做得好。</span></li>
+<li><b>验证即证据是什么意思？</b><br/><span style="color:#2e7d32;">答：每次声明"完成"必须在同一条消息中附上刚运行的验证输出。不接受"之前测过了"或"应该没问题"。</span></li>
+<li><b>Sub-Agent隔离原则？</b><br/><span style="color:#2e7d32;">答：每个Task一个fresh实例，不继承session历史。防止Task A的错误假设污染Task B。</span></li>
+<li><b>进化引擎的四层路径？</b><br/><span style="color:#2e7d32;">答：①feedback静默记录②同一问题3+次→规则毕业③Skill评分低→Skill优化④新模式5+次→创建新Skill。用户确认后执行。</span></li>
+<li><b>简历写11个Skill，面试回答30个Pattern，为什么不一致？</b><br/><span style="color:#2e7d32;">答：Skill指Harness注册的可调用模块（11个，如product-spec-builder/code-review等），Pattern指跨项目沉淀的经验模板（30个）。两个维度不矛盾。</span></li>
+<li><b>Hook系统怎么设计的？PreToolUse/PostToolUse用来做什么？</b><br/><span style="color:#2e7d32;">答：PreToolUse在Tool调用前注入校验逻辑（如检查入参合规），PostToolUse在返回后处理副作用（如记录feedback信号）。detect-feedback-signal.sh是PostToolUse Hook，识别用户纠正行为并触发feedback-observer。</span></li>
+<li><b>AST/Grep Spec drift检测怎么做的？</b><br/><span style="color:#2e7d32;">答：Code Review Stage 1中用AST解析代码函数调用链，Grep提取关键逻辑关键词，与Product-Spec.md中的功能列表做匹配。发现代码中有Spec未定义的功能调用标记为Scope Creep。</span></li>
+<li><b>Design-to-Code怎么实现的？Figma/Pencil MCP怎么对接？</b><br/><span style="color:#2e7d32;">答：通过MCP连接设计工具API，读取选中页面的节点树和样式属性（宽高/padding/字号/颜色），转成Tailwind class配置注入开发阶段的设计数值参照。每个Task开发前重新读取，不凭记忆。</span></li>
+<li><b>Fallback机制怎么设计的？</b><br/><span style="color:#2e7d32;">答：Sub-Agent执行失败时分级处理：NETWORK_ERROR重试3次→BUSINESS_ERROR报告给主Agent跳过后处理→UNKNOWN_ERROR走兜底回复模板+标记人工介入。不阻塞整个Pipeline。</span></li>
+<li><b>pre-commit-check.sh Git Hook做了什么检查？</b><br/><span style="color:#2e7d32;">答：编译检查（tsc --noEmit）、评测集分数阈值检查、未跟踪文件检查、API Key泄露扫描。三项全通过才允许commit。需要合并的commit强制走CI全量评测。</span></li>
+<li><b>skill-builder Agent是什么？</b><br/><span style="color:#2e7d32;">答：进化引擎第四层（新模式5+次无Skill覆盖）触发后，evolution-runner提议创建新Skill，用户确认后派发skill-builder生成SKILL.md骨架。实现了框架的自我扩展。</span></li>
+<li><b>JSON Hook CLI用来做什么？</b><br/><span style="color:#2e7d32;">答：外部脚本通过标准输入JSON与Agent交互，支持PreToolUse/PostToolUse事件的订阅和响应。便于集成到现有CI/CD流程中，不需要改造已有工具链。</span></li>
+<li><b>DAG SDLC具体是什么？和传统SDLC有什么区别？</b><br/><span style="color:#2e7d32;">答：DAG（有向无环图）SDLC是把软件开发流程建模为DAG——节点是Phase，边是依赖关系。和传统瀑布流/敏捷的区别是：Phase之间不一定串联，无依赖的Phase可以并行开发，Harness自动检测DAG决定执行顺序。</span></li>
+<li><b>Tailwind怎么集成到Design-to-Code流程的？</b><br/><span style="color:#2e7d32;">答：MCP从设计工具读取节点样式属性（宽高/padding/字号/颜色/圆角/阴影），自动映射为Tailwind class配置。如"字号16px/字重700" → "text-base font-bold"。每个Task前重新读取，保证数值不偏差。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">通用/背景 — 高频追问 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>跨越速运6万员工3万台车，数据来源？</b><br/><span style="color:#2e7d32;">答：公司官网公开数据+内部HR/车队系统，面试前建议再确认最新数字。</span></li>
+<li><b>技术选型原则"成熟+有生态+团队能hold住"？</b><br/><span style="color:#2e7d32;">答：不追新。A2A协议我们也看了，生态不够成熟暂时观望。选型核心是稳定可控。</span></li>
+<li><b>五个项目时间跨度？并行还是串行？</b><br/><span style="color:#2e7d32;">答：P1 6个月→P2 3个月→P3 4个月→P4 5个月→P5 3个月。部分重叠，P3和P4有并行。</span></li>
+<li><b>团队怎么分工？</b><br/><span style="color:#2e7d32;">答：我主导架构设计+核心开发，2个算法工程师做模型训练，1个前端做后台，1个测试做自动化评测。</span></li>
+</ul>
+</div></div>
+</section>
+id="tab-qa">
 <section id="agent">
 <h2>AI Agent 高频面试题</h2>
 <div class="qa"><div class="qa-q" onclick="toggle(this)">Q1: 现在常见的Agent架构模式有哪些？跨越速运的项目里是怎么选的？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>四种模式用得比较多。ReAct是最基础的——模型想一步做一步，适合简单任务，比如查个轨迹、回答个常见问题。Plan-and-Execute是先做规划再做执行，适合复杂任务——比如客户说"帮我查一下这批货为什么延误了，顺便改个地址"，需要先拆解成查轨迹、分析原因、改地址三个子任务。Reflection是自检模式，生成回复后再让模型检查一遍有没有问题，适合对质量要求高的场景。Multi-Agent是多个Agent分工协作，我们MCP集群其实就是这种思路——不同业务线的Agent共享底层服务。</p><p>跨越速运的项目里没有用某一种模式包打天下，而是按场景选。语音客服的对话管理是状态机+ReAct混合，异常处理是Plan-and-Execute，评测环节用了Reflection。</p><div class="follow"><p><b>→ ReAct的循环怎么控制？会不会无限循环？</b></p><p>会，所以要设上限。我们配了最大轮数5轮，超过5轮还没结束就强制退出，走兜底话术。还有一个防重复机制——如果模型连续两次想调用同一个Tool且参数完全一样，就判定为循环，直接退出。</p><p><b>→ Plan-and-Execute里规划失败怎么办？</b></p><p>如果规划出来的子任务有依赖循环或者不可执行的步骤，会触发重新规划。最多重试3次，3次都失败就降级到ReAct模式，让模型边想边做。</p></div></div></div>
