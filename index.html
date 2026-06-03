@@ -72,6 +72,7 @@ section h2{font-size:22px;color:#1a1a2e;padding-bottom:10px;border-bottom:2px so
 <a href="#" onclick="switchTab('p4');return false;">P4 LangGraph</a>
 <a href="#" onclick="switchTab('p5');return false;">P5 Agent Harness</a>
 <a href="#" onclick="switchTab('qa');return false;">通用题库</a>
+<a href="#" onclick="switchTab('rag');return false;">RAG专题</a>
 </nav>
 <main>
 <h1>面试准备 — 跨越速运 AI 中台</h1>
@@ -83,6 +84,7 @@ section h2{font-size:22px;color:#1a1a2e;padding-bottom:10px;border-bottom:2px so
   <button class="tab-btn" data-tab="p4" onclick="switchTab('p4')">P4 LangGraph</button>
   <button class="tab-btn" data-tab="p5" onclick="switchTab('p5')">P5 Agent Harness</button>
   <button class="tab-btn" data-tab="qa" onclick="switchTab('qa')">通用题库</button>
+<button class="tab-btn" data-tab="rag" onclick="switchTab('rag')">RAG专题</button>
 </div>
 <div class="tab-content active" id="tab-overview">
 <div class="narrative" id="narrative">
@@ -721,6 +723,24 @@ flowchart TB
 <div class="qa"><div class="qa-q" onclick="toggle(this)">Q15: Redis在AI系统里做什么？为什么选Redis而不是PostgreSQL/MongoDB？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>跨越速运的项目里Redis主要做三件事。第一是<strong>短期会话记忆</strong>——用户和客服Agent的对话历史存在Redis里，按session_id隔离，TTL 30分钟。用户连续提问时，Agent从Redis里读出历史上下文拼进Prompt，保证对话连贯。第二是<strong>缓存</strong>——常见问题的RAG检索结果和LLM生成结果走Redis缓存，命中率高的时候能省掉大量Token成本。第三是<strong>限流和分布式锁</strong>——MCP网关用Redis做API配额限流，多Agent场景用Redis分布式锁防止资源冲突。</p><p>选Redis而不是PG/MongoDB的核心原因是<strong>延迟</strong>。会话记忆每次对话都要读写，Redis单节点延迟在1ms以内，PG即使走索引也要10ms以上，对话轮数多了差距很明显。而且Redis的TTL机制天然适合短期记忆——超过30分钟没新消息自动清掉，不用写定时任务。</p><p>PG负责长期画像和LangGraph Checkpointer这些需要持久化和事务支持的数据。MongoDB我们也考虑过，但团队对Redis更熟悉，且Redis的Sorted Set很适合做带过期时间的排行榜类需求（比如热门问题统计），所以没上MongoDB。</p><div class="follow"><p><b>→ Redis挂了怎么办？记忆会丢吗？</b></p><p>Redis挂了短期记忆会丢，但设计上这不是致命问题。Redis只是加速层，丢了之后用户再发消息，Agent会把当前消息当新对话处理，不会崩。我们在Redis前加了本地Caffeine缓存做二级缓存，Redis挂了的短时间内（比如几秒），本地缓存还能撑一下。同时有哨兵模式做高可用，故障切换在10秒以内。</p><p><b>→ TTL 30分钟怎么定的？</b></p><p>看客服对话的间隔分布。统计发现95%的用户在两轮对话之间的间隔不超过20分钟，30分钟能覆盖绝大多数场景。设太短用户去喝杯咖啡回来上下文就丢了；设太长内存占用高。30分钟是平衡后的结果。</p><p><b>→ Redis和PG的数据一致性怎么保证？</b></p><p>短期记忆和长期画像互相独立，没有强一致性问题。对话结束后的画像更新是异步的——从Redis里读出完整对话，用LLM提取关键信息，然后UPSERT到PG。如果UPSERT失败会进死信队列，人工排查后重试。不要求实时一致，最终一致即可。</p></div></div></div>
 
 </section>
+<div class="tab-content" id="tab-rag">
+<section id="rag">
+<h2>RAG 检索增强专题（高频面试题）</h2>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【架构类】RAG的完整流程是什么？每个组件有哪些选型？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>标准RAG流程分三个阶段：<b>Indexing（索引）→ Retrieval（检索）→ Generation（生成）</b>。</p><p><b>Indexing阶段</b>：文档加载→ Chunk切分→ Embedding向量化→ 存入向量库。选型要点：chunk大小（256-1024 tokens）、overlap（10-20%）、Embedding模型（BGE/M3E/Ada）、向量库（pgvector/Milvus/Pinecone）。</p><p><b>Retrieval阶段</b>：Query Embedding→ 向量检索→ 可选Rerank→ 返回Top-K。选型要点：检索方式（纯向量/混合/Hybrid）、Top-K（3-10）、Rerank模型（Cross-Encoder精度高但慢）。</p><p><b>Generation阶段</b>：检索结果+Query拼Prompt→ LLM生成。关键：Prompt约束"只基于检索结果回答"、检索为空时的降级策略。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【架构类】RAG vs Fine-tuning vs Long Context，三者的选型原则？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三者不是互斥的，最佳实践是组合使用。<b>RAG管动态知识</b>——适合频繁变化的信息，改知识库即可生效、可追溯、成本低。<b>Fine-tuning管风格</b>——适合内化沟通风格和领域术语理解，但知识更新需重新训练。<b>Long Context管一次性大文档</b>——适合单次处理超长文档，但有Lost in the Middle问题、成本随长度平方增长。选型口诀：<b>动态知识用RAG，静态风格用微调，一次性大文档用长上下文。</b></p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【分块策略】Chunk大小怎么定？固定切分 vs 语义切分 vs 层级切分？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>固定大小</b>：按固定token数+overlap切，简单快但可能切断语义，推荐256-512 tokens。<b>语义切分</b>：按自然语义边界（段落/句子）切，不破坏完整性但chunk大小不均。<b>层级切分</b>：按文档结构层级切并保留层级关系，宽泛查询用高层级chunk、精确查询用低层级chunk。建议优先语义或层级切分，固定大小作为兜底。Overlap推荐10-20%。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【检索策略】稠密向量 vs 稀疏向量 vs 混合检索怎么选？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>稠密向量</b>：Embedding映射语义空间，理解同义表达但精确匹配弱。<b>稀疏向量</b>：BM25关键词精确匹配强但不理解语义。<b>混合检索（Hybrid Search）</b>：两条路并行，RRF合并结果，两者互补。我们的实践：物流场景既有语义查询又有精确查单号，混合检索效果比纯向量好很多。通用场景优先混合检索，weight配比根据场景动态调整。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【检索策略】Query改写/转换有哪些方法？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>Query扩展</b>：LLM生成同义表达，多条检索后合并。<b>Query重写</b>：把模糊Query改写成明确的检索Query，适合对话中带指代的场景。<b>HyDE</b>：先生成假想理想文档并用其向量检索，适合极短Query但延迟高。我们只在检测到指代词/时间模糊词时才触发改写，完整Query直接检索省掉改写延迟。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【检索策略】Rerank为什么重要？Cross-Encoder vs Bi-Encoder？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>Cross-Encoder</b>：Query+候选文档拼接输入判相关性，精度最高但慢（50-150ms/对）。<b>Bi-Encoder</b>：各自编码后余弦相似度排序，快但精度提升有限。我们选Cross-Encoder——语音ASR转写常有误差，Cross-Encoder能更好处理语义匹配。粗召回Top-20，Rerank精排取Top-5。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【向量库选型】pgvector vs Milvus vs Pinecone vs Qdrant？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>pgvector</b>：PostgreSQL插件，零额外运维，适合百万级以内。我们早期方案。<b>Milvus</b>：专业向量库支持千亿级但需自建集群运维成本高。<b>Pinecone</b>：托管SaaS零运维。<b>Qdrant</b>：Rust高性能，可自托管也可云。我们最终选Viking DB（火山引擎），核心原因是和豆包生态打通好、运维托管不操心。技术选型不只看性能，还要看生态集成和团队熟悉度。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【高级RAG】什么是Agentic RAG？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>标准RAG是"一次检索+一次生成"的直线流程。Agentic RAG把RAG嵌入Agent推理循环——Agent自主决定是否需要二次检索、调用工具、改写Query。关键区别在于<b>迭代和决策能力</b>。适合多步推理查询（"这个产品去德国需要什么认证"→先查分类→再查法规→再查认证）。劣势是延迟高、成本高、调试复杂。单步简单查询用标准RAG就够了。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【高级RAG】什么是Graph RAG？和向量RAG的区别？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>向量RAG做语义相似度匹配，擅长"找相关内容"但不擅长跨文档链式推理。Graph RAG把实体和关系建模为知识图谱，做图遍历查询。优势是<b>链式推理和可解释性</b>，但构建成本高（需要专家梳理实体关系Schema、LLM抽取需人工校验）。我们的Phase 2规划引入Graph RAG做链式推理，Drools做最终决策执行。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【高级RAG】Self-RAG和Corrective RAG是什么？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>Self-RAG</b>：模型生成时自我反思——检索结果是否相关、是否支持生成、生成内容有多少来自检索。用反思Token控制生成过程。<b>Corrective RAG（CRAG）</b>：检索后评估相关性，质量低时触发纠错——改写重试、WebSearch补充、或降级到模型自身知识。我们在P1容灾中的RAG降级策略和CRAG思路一致。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【评估】RAG检索质量怎么评估？指标有哪些？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>检索层面</b>：Hit Rate（是否命中）、MRR（首条命中的排序位置）、NDCG（带权重排序质量）、Recall@K（Top-K覆盖度）。计算成本低，适合日常监控。<b>生成层面</b>：Faithfulness（忠实度/幻觉率）、Answer Relevance（相关性）、Context Precision（上下文精确度）。可用LLM-as-a-Judge打分。我们参考了RAGAS框架的Faithfulness指标设计。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【工程实践】Embedding模型怎么选？领域微调有必要吗？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>选型看MTEB/BEIR评测、向量维度、最大输入长度、语言支持。我们早期用BGE-zh，后来领域微调后命中率从72%→89%（5000对正负样本，RTX 4090 2h）。但领域微调不是必需的——通用模型hit rate > 90%就不需要额外微调。判断标准：在领域测试集上跑hit rate，低于85%才考虑微调。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【工程实践】RAG缓存策略怎么设计？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>两层缓存：<b>检索结果缓存</b>（Redis存Query Embedding→Top-K文档ID，TTL按知识库更新频率设5min-1h，命中率30-40%）；<b>生成结果缓存</b>（语义相似度匹配，命中率15-20%，仅适用静态知识场景）。对时效敏感的场景（查轨迹）只缓存检索不缓存生成，对静态知识场景（政策说明）做双层缓存。</p></div></div>
+</section>
+</div>
 <section id="bg">
 <h2>背景常备题</h2>
 <div class="qa"><div class="qa-q" onclick="toggle(this)">Q1: 能介绍一下跨越速运吗？你们AI团队主要服务什么业务？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>跨越速运是国内大型的零担物流企业，主要是To B的——客户是企业而不是个人，给企业客户提供限时达的物流服务。公司规模挺大的，6万多员工，3万多台车，3000多个网点覆盖全国。</p><p>我们AI团队主要服务客服和业务运营两个方向。客服方向做了语音客服和在线客服，处理客户查轨迹、改地址、投诉理赔这些高频需求。业务运营方向做了智能导购和内容运营，帮助销售团队更高效地服务客户。</p></div></div>
