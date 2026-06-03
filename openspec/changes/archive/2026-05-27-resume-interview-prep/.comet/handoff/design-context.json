@@ -1,0 +1,13 @@
+{
+  "change": "resume-interview-prep",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "c0b340655a9cf730894a7238cc5b19a6d1fa4904dbf1e5b634db65da3a61624c",
+  "files": [
+    { "path": "openspec/changes/resume-interview-prep/proposal.md", "sha256": "3dd224996caa4c714b9112801151051be3536584232da5ef1c2e53d4132134e7" },
+    { "path": "openspec/changes/resume-interview-prep/design.md", "sha256": "905d44535ae59484ce1dd3bc219832f984b01e522da1276faf5569499241f98f" },
+    { "path": "openspec/changes/resume-interview-prep/tasks.md", "sha256": "8dbfd7b6cc2ab1739698ebca3482ef454ff65ddaf621ba7f2edbc884cd7a9533" }
+  ]
+}

@@ -1,0 +1,18 @@
+workflow: full
+phase: archive
+build_mode: direct
+isolation: branch
+verify_mode: light
+base_ref: null
+design_doc: docs/superpowers/specs/2025-05-27-interview-prep-design.md
+plan: docs/superpowers/plans/2025-05-27-interview-prep.md
+verify_result: pass
+verification_report: docs/superpowers/reports/2025-05-27-resume-interview-prep-verify.md
+branch_status: handled
+created_at: 2026-05-27
+verified_at: 2026-05-27
+archived: true
+handoff_context: openspec/changes/resume-interview-prep/.comet/handoff/design-context.json
+handoff_hash: c0b340655a9cf730894a7238cc5b19a6d1fa4904dbf1e5b634db65da3a61624c
+direct_override: true
+build_command: test -f interview-prep.html && test -f interview-prep.md && echo BUILD_OK
