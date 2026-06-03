@@ -723,7 +723,6 @@ flowchart TB
 <div class="qa"><div class="qa-q" onclick="toggle(this)">Q15: Redis在AI系统里做什么？为什么选Redis而不是PostgreSQL/MongoDB？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>跨越速运的项目里Redis主要做三件事。第一是<strong>短期会话记忆</strong>——用户和客服Agent的对话历史存在Redis里，按session_id隔离，TTL 30分钟。用户连续提问时，Agent从Redis里读出历史上下文拼进Prompt，保证对话连贯。第二是<strong>缓存</strong>——常见问题的RAG检索结果和LLM生成结果走Redis缓存，命中率高的时候能省掉大量Token成本。第三是<strong>限流和分布式锁</strong>——MCP网关用Redis做API配额限流，多Agent场景用Redis分布式锁防止资源冲突。</p><p>选Redis而不是PG/MongoDB的核心原因是<strong>延迟</strong>。会话记忆每次对话都要读写，Redis单节点延迟在1ms以内，PG即使走索引也要10ms以上，对话轮数多了差距很明显。而且Redis的TTL机制天然适合短期记忆——超过30分钟没新消息自动清掉，不用写定时任务。</p><p>PG负责长期画像和LangGraph Checkpointer这些需要持久化和事务支持的数据。MongoDB我们也考虑过，但团队对Redis更熟悉，且Redis的Sorted Set很适合做带过期时间的排行榜类需求（比如热门问题统计），所以没上MongoDB。</p><div class="follow"><p><b>→ Redis挂了怎么办？记忆会丢吗？</b></p><p>Redis挂了短期记忆会丢，但设计上这不是致命问题。Redis只是加速层，丢了之后用户再发消息，Agent会把当前消息当新对话处理，不会崩。我们在Redis前加了本地Caffeine缓存做二级缓存，Redis挂了的短时间内（比如几秒），本地缓存还能撑一下。同时有哨兵模式做高可用，故障切换在10秒以内。</p><p><b>→ TTL 30分钟怎么定的？</b></p><p>看客服对话的间隔分布。统计发现95%的用户在两轮对话之间的间隔不超过20分钟，30分钟能覆盖绝大多数场景。设太短用户去喝杯咖啡回来上下文就丢了；设太长内存占用高。30分钟是平衡后的结果。</p><p><b>→ Redis和PG的数据一致性怎么保证？</b></p><p>短期记忆和长期画像互相独立，没有强一致性问题。对话结束后的画像更新是异步的——从Redis里读出完整对话，用LLM提取关键信息，然后UPSERT到PG。如果UPSERT失败会进死信队列，人工排查后重试。不要求实时一致，最终一致即可。</p></div></div></div>
 
 </section>
-</div>
 <div class="tab-content" id="tab-rag">
 <section id="rag">
 <h2>RAG 检索增强专题（高频面试题）</h2>
