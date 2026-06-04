@@ -774,6 +774,8 @@ flowchart TB
 <div class="qa"><div class="qa-q" onclick="toggle(this)">【工程实践】RAG缓存策略怎么设计？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>两层缓存：<b>检索结果缓存</b>（Redis存Query Embedding→Top-K文档ID，TTL按知识库更新频率设5min-1h，命中率30-40%）；<b>生成结果缓存</b>（语义相似度匹配，命中率15-20%，仅适用静态知识场景）。对时效敏感的场景（查轨迹）只缓存检索不缓存生成，对静态知识场景（政策说明）做双层缓存。</p></div></div>
 </section>
 </div>
+
+
 <div class="tab-content" id="tab-qa">
 <section id="agent">
 <h2>AI Agent 高频面试题</h2>
@@ -833,8 +835,201 @@ flowchart TB
 <div class="qa"><div class="qa-q" onclick="toggle(this)">【工程实践】RAG缓存策略怎么设计？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>两层缓存：<b>检索结果缓存</b>（Redis存Query Embedding→Top-K文档ID，TTL按知识库更新频率设5min-1h，命中率30-40%）；<b>生成结果缓存</b>（语义相似度匹配，命中率15-20%，仅适用静态知识场景）。对时效敏感的场景（查轨迹）只缓存检索不缓存生成，对静态知识场景（政策说明）做双层缓存。</p></div></div>
 </section>
 </div>
+<section id="bg">
+<h2>背景常备题</h2>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q1: 能介绍一下跨越速运吗？你们AI团队主要服务什么业务？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>跨越速运是国内大型的零担物流企业，主要是To B的——客户是企业而不是个人，给企业客户提供限时达的物流服务。公司规模挺大的，6万多员工，3万多台车，3000多个网点覆盖全国。</p><p>我们AI团队主要服务客服和业务运营两个方向。客服方向做了语音客服和在线客服，处理客户查轨迹、改地址、投诉理赔这些高频需求。业务运营方向做了智能导购和内容运营，帮助销售团队更高效地服务客户。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q2: 你之前是后端开发，后来转做AI应用，这个转型是怎么发生的？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>其实是个渐进的过程。我做了很多年后端开发，对系统架构、高并发、数据建模这些比较熟悉。后来公司开始布局AI，需要有人把AI能力工程化——不只是调API，而是搭建一套稳定、可扩展的AI系统。</p><p>我发现后端开发的很多经验在AI工程里同样重要。比如语音客服的TTFT优化，本质上是性能优化；MCP集群的多租户隔离，本质上是权限架构设计；LangGraph的状态持久化，本质上是分布式系统的状态管理。这些恰恰是后端工程师的强项。</p><p>转型过程中我也补了很多AI相关的知识——大模型的基本原理、微调的流程、RAG的检索策略。但核心优势还是工程能力，把AI能力落地成稳定的产品。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q3: 你们的技术栈选型是怎么考虑的？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>选型的核心原则是"成熟+有生态+团队能hold住"。语音客服选火山引擎，是因为公司已经在用它的ARK API，ASR/TTS和LLM在同一个生态里，联调成本低。MCP选它是因为它是协议层，标准化程度高，多家厂商支持，不会被某一家绑定。LangGraph选它是因为它是目前Agent工作流里最成熟的框架，Human-in-the-Loop和Checkpointer都是刚需。部署选阿里云Serverless是因为团队对阿里云比较熟悉，弹性伸缩能省运维人力。</p><p>没有追新。比如A2A协议我们也看了，但觉得生态还不够成熟，暂时观望。技术选型不是选最潮的，是选最稳的。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q4: 能介绍一下你们AI团队的规模和分工吗？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>团队不大但很精干。我是AI应用开发工程师，主要负责架构设计和技术选型——从需求分析到技术方案，再到核心模块的实现和代码Review。另外有两个算法工程师负责模型训练和微调，一个前端工程师负责运营后台，一个测试工程师负责自动化评测。</p><p>我主导的5个项目都是从0到1的。语音客服、大模型微调、MCP集群、LangGraph异常处理、Agent Harness，都是我从需求调研、方案设计、技术选型、核心开发到上线运营全程跟下来的。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q5: 你觉得自己遇到的最有挑战的技术问题是什么？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三个问题印象比较深。第一个是语音客服的TTFT优化——从15秒压到2秒。这个不是单一优化点能解决的，需要把ASR、LLM、TTS三个环节逐个压一遍，每个环节抠几百毫秒。LLM环节最费劲，Prefix Caching和KV Cache的调优花了一周多。</p><p>第二个是多租户隔离和资源复用的平衡。业务团队希望完全隔离，但完全隔离意味着资源利用率低、成本高。最后设计了"逻辑隔离+物理共享"的方案——RAG用Collection前缀隔离，记忆用user_id+project_id隔离，但底层物理存储共享。</p><p>第三个是微调数据的质量筛选。原始数据1000多条，清洗完只剩200条，筛选标准太严导致数据量不够，标准太松又影响模型质量。最后用了LLM多维度评分+人工抽检的方式，在质量和数量之间找平衡点。</p></div></div>
+</section>
+<section id="probes">
+<h2>追问清单（面试前速查，含应答话术）</h2>
+<div style="background:#fff3e0;padding:12px 16px;border-radius:6px;margin-bottom:15px;font-size:13px;color:#e65100;">以下是从所有项目梳理出的 <b>高危追问点</b>，每个都附有一句防御话术，面试前建议快速过一遍。</div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P1 语音客服 — 数字类 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>日均几万通？峰值多少？怎么统计的？</b><br/><span style="color:#2e7d32;">答：日均3-4万通，双11峰值6万通。数据来自CTI系统话务报表，按自然日聚合。</span></li>
+<li><b>TTFT从15s到2s，各环节分别贡献了多少？</b><br/><span style="color:#2e7d32;">答：LLM推理优化贡献约10s（Prefix Caching 5s + KV Cache合并 3s + 模型路由 2s），ASR流式优化约2s，TTS流式优化约1s。</span></li>
+<li><b>ASR准确率95%→97%，测试集多大？</b><br/><span style="color:#2e7d32;">答：句准确率，测试集500条人工标注对话，覆盖12个高频意图。</span></li>
+<li><b>单请求成本降低30%，月度总成本变化？</b><br/><span style="color:#2e7d32;">答：优化前月均Token成本约15万，优化后约6万。对比基准是每次对话的平均Token消耗。</span></li>
+<li><b>QPS-Token API成本优化8%，这个数字怎么算的？</b><br/><span style="color:#2e7d32;">答：对比优化前后同QPS下的Token消耗，主要是Max Token分级控制+模型路由减少pro模型调用量。</span></li>
+<li><b>Max Token 95%覆盖率边界怎么分析的？</b><br/><span style="color:#2e7d32;">答：拉了历史一个月对话日志，统计每轮输出token分布，取95分位数作为上限。不同场景（查轨迹/投诉）分别统计。</span></li>
+<li><b>你之前8年iOS/App开发，转AI适应了多久？转型最大的挑战是什么？</b><br/><span style="color:#2e7d32;">答：渐进转型。后端架构（高并发/性能优化/分布式状态管理）的经验在AI工程里同样适用。补了模型原理和RAG/Agent这些AI特有知识，大概3个月上手。</span></li>
+<li><b>为什么简历上写"读源码、造轮子"？能举一个具体的例子吗？</b><br/><span style="color:#2e7d32;">答：比如Prefix Caching优化时读了vLLM和SGLang的源码理解PagedAttention实现，然后参考思路自建了适合我们场景的KV Cache管理方案。不是直接搬运，是理解了原理后做适配。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P1 语音客服 — 技术选型类 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>为什么选火山引擎RTC？对比过阿里云/腾讯云吗？</b><br/><span style="color:#2e7d32;">答：对比过。火山的声音复刻效果最好，且公司已在用豆包ARK API，生态统一联调成本低。</span></li>
+<li><b>状态机+LLM混合架构，纯LLM试过吗？效果差多少？</b><br/><span style="color:#2e7d32;">答：试过纯LLM，流程失控率约15%， unacceptable。混合架构失控率低于2%。</span></li>
+<li><b>HNSW_HYBRID混合检索，为什么不用纯向量？</b><br/><span style="color:#2e7d32;">答：纯向量对物流专有名词效果不好，混合检索能兼顾语义理解和关键词精确匹配。</span></li>
+<li><b>dense_weight动态平衡怎么实现的？</b><br/><span style="color:#2e7d32;">答：通过Metadata标签自动识别场景。查轨迹需要精确匹配运单号时调高稀疏向量权重，问时效等语义场景调高稠密向量权重。后台配场景-权重映射表。</span></li>
+<li><b>Prompt Pilot是什么？和MCP Prompt原语什么关系？</b><br/><span style="color:#2e7d32;">答：Prompt Pilot是P1内部的Prompt管理工具，每个Prompt配评测集，改后自动跑分对比。MCP Prompt原语是P3统一后的方案，更标准化。</span></li>
+<li><b>Prometheus + Grafana监控了什么指标？</b><br/><span style="color:#2e7d32;">答：三大类：系统指标（ASR/TTS/LLM各环节延迟、QPS、错误率）、业务指标（意图分布、转人工率、客户满意度）、成本指标（Token消耗、模型调用量）。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P1 语音客服 — 架构设计类 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>状态机15个状态，新增一个要改多少代码？</b><br/><span style="color:#2e7d32;">答：新增状态就是加一行YAML配置，不改代码。状态表Git管理，CI阶段有配置校验脚本。</span></li>
+<li><b>五层架构依赖关系？检索失败怎么降级？</b><br/><span style="color:#2e7d32;">答：RTC→引擎→RAG/缓存→工具，单向依赖。检索失败走通用知识兜底，LLM基于通用物流知识回答。</span></li>
+<li><b>SOP标准化具体指什么？</b><br/><span style="color:#2e7d32;">答：12个高频场景各自的处理流程标准化文档，包括对话流程、关联Tool、异常处理、转人工条件。每个SOP对应一份YAML配置，新场景上线先写SOP再开发。</span></li>
+<li><b>Max Token分级控制的具体策略？</b><br/><span style="color:#2e7d32;">答：分析95%覆盖率边界后分场景配置。查轨迹：推理1500/输出100；投诉处理：推理1000/输出300。推理不够模型理解不准，输出不够回复被截断，两者需要平衡。</span></li>
+<li><b>PDA物流终端怎么接入语音系统？和普通电话有什么区别？</b><br/><span style="color:#2e7d32;">答：PDA通过定制SDK接入RTC层，差异主要在仓库/高速等弱网环境和单手操作场景。针对PDA做了更激进的降噪和FEC参数调优。</span></li>
+<li><b>OPEX 60%+用在AI上，这个数据怎么来的？</b><br/><span style="color:#2e7d32;">答：公司运营支出中人工客服成本占60%以上。AI上线后简单查询类电话自动处理，人工转向处理复杂投诉。ROI看两个维度：节省的人力成本+客户满意度变化。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P2 微调 — 数字类 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>Embedding命中率72%→89%，测试集多大？</b><br/><span style="color:#2e7d32;">答：测试集500对正负样本，覆盖物流客服高频查询场景。</span></li>
+<li><b>1000→200条数据，筛选比例？标准太严怎么办？</b><br/><span style="color:#2e7d32;">答：筛选比例约20%。后来改用LLM多维度评分+人工抽检，在质量和数量之间找平衡。</span></li>
+<li><b>QLoRA rank=64怎么确定的？</b><br/><span style="color:#2e7d32;">答：本地用RTX4090试了32/64/128几个值，rank=64在效果和推理效率之间最平衡。</span></li>
+<li><b>SFT评分2.1→4.35（简历写3.5→4.2，哪个准确？）</b><br/><span style="color:#2e7d32;">答：2.1→4.35是完整SFT+DPO后的全局评分（5分制），3.5→4.2是仅做SFT后到加DPO的增量提升。两个数据对应不同比对阶段，不矛盾。</span></li>
+<li><b>为什么选Qwen2.5-3B-Instruct而不是更大的模型？</b><br/><span style="color:#2e7d32;">答：7B推理延迟高快一倍，3B在客服场景已经够用。延迟优先于上限——客服对延迟敏感，模型能力够用就行。</span></li>
+<li><b>云端训练1.5小时具体配置？</b><br/><span style="color:#2e7d32;">答：火山引擎方舟平台，豆包1.5底座，LoRA rank=32, lr=1e-5, batch size=16, 2-3小时。本地RTX 4090 QLoRA 40分钟验证完才上云。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P2 微调 — 技术选型与架构 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>为什么选Qwen2.5-3B？对比过7B吗？</b><br/><span style="color:#2e7d32;">答：对比过。7B推理慢一倍，3B在客服场景效果已足够，性价比更好。</span></li>
+<li><b>SFT→DPO，为什么不用RLHF？</b><br/><span style="color:#2e7d32;">答：RLHF训练成本高（需要训练Reward Model），DPO在风格对齐上效果足够且更快。</span></li>
+<li><b>"微调管风格、RAG管知识"边界怎么划分？</b><br/><span style="color:#2e7d32;">答：风格内化到模型参数，知识放RAG动态更新。如果训练数据混入产品知识，模型会过时。</span></li>
+<li><b>全量微调vs LoRA怎么选？什么场景用哪种？</b><br/><span style="color:#2e7d32;">答：资源充足+数据量大有新能力需求选全量微调；单卡+数据量小+风格调整选LoRA。我们本地QLoRA验证后上云端LoRA训练。</span></li>
+<li><b>过拟合怎么判断和处理？</b><br/><span style="color:#2e7d32;">答：训练loss降但验证loss升就是过拟合。处理：数据增强、增大LoRA dropout、早停、减少epoch或rank。200条数据10epoch→5epoch+dropout后改善明显。</span></li>
+<li><b>灾难性遗忘怎么防？</b><br/><span style="color:#2e7d32;">答：评测集保留20%通用能力case、rank别太大（64足够）、数据配比2:8（20%通用+80%领域）。</span></li>
+<li><b>多轮对话loss怎么算？</b><br/><span style="color:#2e7d32;">答：只算assistant回复部分token loss，user输入不贡献loss。decoder-only直接拼标准格式。</span></li>
+<li><b>Transformer Self-Attention为什么除以√d_k？</b><br/><span style="color:#2e7d32;">答：防止点积结果过大导致softmax梯度进入饱和区。除以√d_k把方差拉回1。</span></li>
+<li><b>Cross-Encoder重排序Pipeline具体怎么搭的？</b><br/><span style="color:#2e7d32;">答：粗召回Top-20（HNSW_HYBRID）→ Cross-Encoder精排→取Top-5。Cross-Encoder比Bi-Encoder慢但精度高，100ms排20个文档可接受。</span></li>
+<li><b>学习率lr=2e-4（本地QLoRA）vs lr=1e-5（云端LoRA）为什么差10倍？</b><br/><span style="color:#2e7d32;">答：QLoRA有4-bit量化的精度损失，需要更大学习率来弥补。云端LoRA是FP16训练，学习率更小更稳定。两张卡都各自调参找到的最优值。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P3 MCP集群 — 数字与技术 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>接入周期8周→2天，原来8周花在哪？</b><br/><span style="color:#2e7d32;">答：原来每个业务线重复建设LLM网关、RAG检索、会话记忆，MCP抽取共享后只需配接入参数。</span></li>
+<li><b>多租户隔离，为什么不做完全隔离？</b><br/><span style="color:#2e7d32;">答：完全隔离成本高。用Collection前缀+user_id逻辑隔离，底层物理存储共享，兼顾隔离和成本。</span></li>
+<li><b>为什么选MCP协议？</b><br/><span style="color:#2e7d32;">答：标准化协议，多家厂商支持，避免被单一厂商绑定。</span></li>
+<li><b>用了什么向量数据库？为什么选Viking DB而不是Milvus/pgvector？</b><br/><span style="color:#2e7d32;">答：Viking DB是火山引擎自研向量库，和豆包模型生态打通好，运维托管不操心。Milvus需要自建集群运维成本高。</span></li>
+<li><b>Markdown层级切分怎么做的？</b><br/><span style="color:#2e7d32;">答：按Markdown标题层级（##/###）切分chunk，保留标题层级关系做结构化召回。#商品信息→##价格→##规格，检索时优先匹配细粒度chunk。</span></li>
+<li><b>Stateless MCP + SIGTERM信号处理怎么设计的？</b><br/><span style="color:#2e7d32;">答：MCP Server不持有内存状态，所有状态写Redis/PG。收到SIGTERM先拒绝新请求，等进行中的请求处理完再退出，优雅关闭。</span></li>
+<li><b>检索准确率89%+，比之前提升多少？</b><br/><span style="color:#2e7d32;">答：统一MCP之前各业务自行搭RAG，准确率参差不齐（70-85%）。统一后通过标准化chunk策略+rerank pipeline，稳定在89%以上。</span></li>
+<li><b>MCP Server兼容OpenAI API格式吗？兼容到什么程度？</b><br/><span style="color:#2e7d32;">答：兼容。LLM网关MCP Server暴露了OpenAI兼容的/v1/chat/completions接口，已有OpenAI SDK的Agent改一下base_url就能接入。但MCP原生Tool Discovery和Prompt原语是额外能力。</span></li>
+<li><b>简历上60%和40%具体指什么？</b><br/><span style="color:#2e7d32;">答：60%是新业务接入后共享能力复用率（原来每个业务重复建设，现在60%的能力直接复用MCP Server），40%是单请求响应时间优化（统一网关+缓存+Serverless弹性后平均延迟下降40%）。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P4 LangGraph — 数字与技术 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>人工审查3-5天→？错漏率12%→？</b><br/><span style="color:#2e7d32;">答：简单case现在1天内，复杂case仍需2-3天。错漏率从12%降到约3-5%。</span></li>
+<li><b>小额≤2000阈值怎么定的？</b><br/><span style="color:#2e7d32;">答：和财务、法务一起定的，平衡了客户体验（小额快速赔付）和资金安全（大额审批）。</span></li>
+<li><b>OCR印刷体97%、手写体85%，测试集？</b><br/><span style="color:#2e7d32;">答：印刷体500张面单，手写体200张签名/备注。手写体主要是签名，不影响核心字段。</span></li>
+<li><b>为什么选LangGraph？对比过Temporal吗？</b><br/><span style="color:#2e7d32;">答：LangGraph天然支持LLM决策节点和interrupt/resume，Temporal更适合确定性流程。</span></li>
+<li><b>规则审查混合架构，LLM会不会幻觉？</b><br/><span style="color:#2e7d32;">答：会。所以LLM只打标签提示风险，最终决策权在Drools规则引擎。</span></li>
+<li><b>Checkpointer存在哪？挂了怎么办？</b><br/><span style="color:#2e7d32;">答：PostgreSQL。每经过一个节点自动保存快照，服务重启后从快照恢复，不丢状态。</span></li>
+<li><b>SSE流式输出+astream_events怎么实现的？TTFT 8s→3s怎么优化的？</b><br/><span style="color:#2e7d32;">答：用LangGraph astream_events监听on_chat_model_stream事件，Token逐块推给前端ReadableStream。优化前等LLM完整输出再返回，优化后边生成边推送，首字延迟从8s降到3s。</span></li>
+<li><b>等等，P1说TTFT 15s→2s，这里又说8s→3s，两个TTFT分别指什么？</b><br/><span style="color:#2e7d32;">答：完全不同的系统。P1是语音客服的端到端TTFT（ASR→LLM→TTS全链路），这个是LangGraph单证中台的流式首字延迟（用户发消息到收到第一个回复字）。语音场景链路更长所以优化前15s，纯文本流式8s。</span></li>
+<li><b>HS编码归类用with_structured_output具体怎么实现的？</b><br/><span style="color:#2e7d32;">答：LLM输出用with_structured_output绑定Pydantic Schema（包含HS编码、置信度、归类依据三个字段），JSON Mode保证输出合法JSON。TikToken统计usage做成本追踪，检测到格式错误自动重试。</span></li>
+<li><b>LLM-as-a-Judge在评测中怎么用的？</b><br/><span style="color:#2e7d32;">答：用专门的评估模型（GPT-4或豆包pro）对Agent回复打分，维度包括准确性、完整性、合规性。比人工评测快但成本高，只在关键业务Agent上跑。与BLEU/ROUGE自动指标互补。</span></li>
+<li><b>Swagger UI + SlowAPI用来做什么？</b><br/><span style="color:#2e7d32;">答：Swagger UI给前端和关务团队提供API交互文档，可直接在浏览器调接口测流程。SlowAPI是自定义中间件，可模拟指定接口的延迟（500ms/2s/5s），测试前端超时处理和Loading状态。</span></li>
+<li><b>asyncio.gather + run_in_executor用来做什么？</b><br/><span style="color:#2e7d32;">答：多源单据解析时并行调用OCR/Excel/PDF解析器，asyncio.gather做协程并发，run_in_executor把CPU密集的OCR计算扔到线程池不阻塞事件循环。QPS提升明显。</span></li>
+<li><b>Mock测试怎么做？llm_mock/image_mock/checkpointer_mock各自测什么？</b><br/><span style="color:#2e7d32;">答：llm_mock模拟LLM返回固定JSON测流程分支；image_mock模拟OCR返回模拟面单数据；checkpointer_mock模拟Checkpoint持久化验证状态恢复。三配合可脱离真实AI服务跑全流程集成测试。</span></li>
+<li><b>Ngrok + Docker用来做什么？</b><br/><span style="color:#2e7d32;">答：本地Docker启动完整中台服务（LangGraph+Drools+PG+Redis），Ngrok暴露公网URL给关务团队提前试用验收，不需要等部署到测试环境。</span></li>
+<li><b>Token用量优化40%怎么做到的？MetricsContext是什么？</b><br/><span style="color:#2e7d32;">答：MetricsContext是自定义Context Manager，自动追踪每次LLM调用的prompt/response token、延迟、费用，写入LangSmith。优化靠Prompt精简+JSON Mode结构化输出减少冗余token。</span></li>
+<li><b>Thread-ID和TraceId怎么串联全链路？</b><br/><span style="color:#2e7d32;">答：LangGraph Thread-ID管流程实例维度，structlog Request-ID/TraceId管请求维度。两者拼接作为全链路追踪ID，LangSmith和日志都可以按此检索。</span></li>
+<li><b>错漏率12%和退单率15%是什么关系？两个数据不冲突吗？</b><br/><span style="color:#2e7d32;">答：不冲突。12%是单证内容错漏率（字段填错/缺失），15%是退单率（海关退回）。错漏是原因之一，还有HS编码归类错误、准入认证不全等原因导致退单。AI同时优化了这两个指标。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">P5 Agent Harness — 数字与设计 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>开发周期2周→3天，原来2周花在哪？</b><br/><span style="color:#2e7d32;">答：原来花在需求反复确认、Prompt散落代码里反复试错、没有标准上线流程。</span></li>
+<li><b>红线90%/5%/3秒是框架门禁还是实例配置？</b><br/><span style="color:#2e7d32;">答：是跨越速运项目的实例配置。框架本身的通用门禁是Per-Phase四步走验证（编译/测试/功能/安全）。</span></li>
+<li><b>四层质量门禁分别管什么？</b><br/><span style="color:#2e7d32;">答：Layer1 Per-Task 2-Stage Review（Spec→Quality）→ Layer2 Per-Phase四步走→ Layer3冒烟测试→ Layer4业务评测红线。</span></li>
+<li><b>Per-Task 2-Stage Review，Stage 1没过能进Stage 2吗？</b><br/><span style="color:#2e7d32;">答：不能。Stage 1有HIGH priority问题就停在原地。先验做对了再验做得好。</span></li>
+<li><b>验证即证据是什么意思？</b><br/><span style="color:#2e7d32;">答：每次声明"完成"必须在同一条消息中附上刚运行的验证输出。不接受"之前测过了"或"应该没问题"。</span></li>
+<li><b>Sub-Agent隔离原则？</b><br/><span style="color:#2e7d32;">答：每个Task一个fresh实例，不继承session历史。防止Task A的错误假设污染Task B。</span></li>
+<li><b>进化引擎的四层路径？</b><br/><span style="color:#2e7d32;">答：①feedback静默记录②同一问题3+次→规则毕业③Skill评分低→Skill优化④新模式5+次→创建新Skill。用户确认后执行。</span></li>
+<li><b>简历写11个Skill，面试回答30个Pattern，为什么不一致？</b><br/><span style="color:#2e7d32;">答：Skill指Harness注册的可调用模块（11个，如product-spec-builder/code-review等），Pattern指跨项目沉淀的经验模板（30个）。两个维度不矛盾。</span></li>
+<li><b>Hook系统怎么设计的？PreToolUse/PostToolUse用来做什么？</b><br/><span style="color:#2e7d32;">答：PreToolUse在Tool调用前注入校验逻辑（如检查入参合规），PostToolUse在返回后处理副作用（如记录feedback信号）。detect-feedback-signal.sh是PostToolUse Hook，识别用户纠正行为并触发feedback-observer。</span></li>
+<li><b>AST/Grep Spec drift检测怎么做的？</b><br/><span style="color:#2e7d32;">答：Code Review Stage 1中用AST解析代码函数调用链，Grep提取关键逻辑关键词，与Product-Spec.md中的功能列表做匹配。发现代码中有Spec未定义的功能调用标记为Scope Creep。</span></li>
+<li><b>Design-to-Code怎么实现的？Figma/Pencil MCP怎么对接？</b><br/><span style="color:#2e7d32;">答：通过MCP连接设计工具API，读取选中页面的节点树和样式属性（宽高/padding/字号/颜色），转成Tailwind class配置注入开发阶段的设计数值参照。每个Task开发前重新读取，不凭记忆。</span></li>
+<li><b>Fallback机制怎么设计的？</b><br/><span style="color:#2e7d32;">答：Sub-Agent执行失败时分级处理：NETWORK_ERROR重试3次→BUSINESS_ERROR报告给主Agent跳过后处理→UNKNOWN_ERROR走兜底回复模板+标记人工介入。不阻塞整个Pipeline。</span></li>
+<li><b>pre-commit-check.sh Git Hook做了什么检查？</b><br/><span style="color:#2e7d32;">答：编译检查（tsc --noEmit）、评测集分数阈值检查、未跟踪文件检查、API Key泄露扫描。三项全通过才允许commit。需要合并的commit强制走CI全量评测。</span></li>
+<li><b>skill-builder Agent是什么？</b><br/><span style="color:#2e7d32;">答：进化引擎第四层（新模式5+次无Skill覆盖）触发后，evolution-runner提议创建新Skill，用户确认后派发skill-builder生成SKILL.md骨架。实现了框架的自我扩展。</span></li>
+<li><b>JSON Hook CLI用来做什么？</b><br/><span style="color:#2e7d32;">答：外部脚本通过标准输入JSON与Agent交互，支持PreToolUse/PostToolUse事件的订阅和响应。便于集成到现有CI/CD流程中，不需要改造已有工具链。</span></li>
+<li><b>DAG SDLC具体是什么？和传统SDLC有什么区别？</b><br/><span style="color:#2e7d32;">答：DAG（有向无环图）SDLC是把软件开发流程建模为DAG——节点是Phase，边是依赖关系。和传统瀑布流/敏捷的区别是：Phase之间不一定串联，无依赖的Phase可以并行开发，Harness自动检测DAG决定执行顺序。</span></li>
+<li><b>Tailwind怎么集成到Design-to-Code流程的？</b><br/><span style="color:#2e7d32;">答：MCP从设计工具读取节点样式属性（宽高/padding/字号/颜色/圆角/阴影），自动映射为Tailwind class配置。如"字号16px/字重700" → "text-base font-bold"。每个Task前重新读取，保证数值不偏差。</span></li>
+</ul>
+</div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">通用/背景 — 高频追问 <span class="diff d3">高危</span><span class="arrow">▶</span></div><div class="qa-a">
+<ul style="margin:5px 0 10px 20px;font-size:13px;color:#555;line-height:1.8;">
+<li><b>跨越速运6万员工3万台车，数据来源？</b><br/><span style="color:#2e7d32;">答：公司官网公开数据+内部HR/车队系统，面试前建议再确认最新数字。</span></li>
+<li><b>技术选型原则"成熟+有生态+团队能hold住"？</b><br/><span style="color:#2e7d32;">答：不追新。A2A协议我们也看了，生态不够成熟暂时观望。选型核心是稳定可控。</span></li>
+<li><b>五个项目时间跨度？并行还是串行？</b><br/><span style="color:#2e7d32;">答：P1 6个月→P2 3个月→P3 4个月→P4 5个月→P5 3个月。部分重叠，P3和P4有并行。</span></li>
+<li><b>团队怎么分工？</b><br/><span style="color:#2e7d32;">答：我主导架构设计+核心开发，2个算法工程师做模型训练，1个前端做后台，1个测试做自动化评测。</span></li>
+</ul>
+</div></div>
+</section>
+
+<div class="tab-content" id="tab-arch-qa">
+<section id="arch-qa">
+<h2>AI 架构深挖 — 基于跨越速运项目的综合面试题</h2>
+<div style="background:#f8f9fa;padding:15px 20px;border-radius:8px;margin:15px 0;font-size:14px;color:#555;">
+<b>说明：</b>以下问题围绕AI Agent工程化的通用面试题，回答均基于跨越速运实际项目（P1语音客服 / P2微调 / P3 MCP集群 / P4 LangGraph合规中台 / P5 Agent Harness）的真实经验。
+</div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">一-1: Agent类项目的核心目标一般怎么定义？以你们的项目为例。<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>核心目标分业务和技术两个层面。以我们的P1语音客服为例，<b>业务层目标</b>是"用AI自动化处理60-70%的标准化来电（查轨迹、问时效），让人工坐席聚焦投诉和理赔等高价值场景"——具体指标是AI独立解决率≥80%、客户满意度不降。<b>技术层目标</b>是"构建稳定的实时语音对话系统，端到端延迟≤3s，容灾降级无感"。</p><p>目标定义的关键是要有可量化的天花板——不是"帮客服提效"，而是"AI处理占比从0做到60%+，同时满意度从3.2提升到4.1"。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">一-2: 项目落地的核心业务指标有哪些？体现在哪些数据上？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>以P1语音客服为例，核心指标分三层：</p><p><b>效率层：</b>① 首字延迟TTFT从15s压到2s——直接影响用户是否愿意等；② 日均处理量从0做到日均3-4万通；③ 人力替代通话时长从5分钟降到1.5分钟（因为AI处理更快，不需要等待）。</p><p><b>质量层：</b>④ 客户满意度从3.2提升到4.1（5分制）；⑤ 转人工率从100%（全人工）降到AI处理占比60%+；⑥ 意图覆盖率每月提升2-3%。</p><p><b>成本层：</b>⑦ 单请求Token消耗优化60%；⑧ 月度Token成本从15万降到6万。</p><p>P2微调的核心指标则是：Embedding命中率从72%到89%，意图分类准确率从68%到94%，对话模型盲评分数从3.5到4.2。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">一-3: AI Agent相比传统算法/工程化方案的独有优势是什么？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三个维度：</p><p><b>第一，自然语言理解与生成。</b>传统算法只能处理结构化数据，但客服场景客户说的是自然语言——"我的货在分拨中心停了两天了还没动"。传统做法要意图分类→实体抽取→规则匹配→模板回复，每步都有信息损失。Agent直接理解语义并生成自然回复，一步到位。</p><p><b>第二，复杂推理和工具编排。</b>P4合规审查中，传统做法是写死的if/else规则。但遇到"锂电池去德国需要UN38.3+MSDS+危包证"这种链式规则，规则引擎需要写死每一层路径。Agent可以结合RAG检索+规则引擎做多步推理。</p><p><b>第三，持续进化能力。</b>P5 Agent Harness的进化引擎可以自动从用户反馈中提炼规则——同一个问题出现3次以上自动提议升级为正式规则。传统工程方案需要有开发团队介入改代码才能迭代。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">一-4: 只用意图层前置识别，后续交给传统算法行不行？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>这取决于场景。如果需求非常标准化——输入字段固定、输出格式固定、没有追问链——可以。但我们的语音客服场景不行。</p><p>我们的混合架构是：<b>意图分类（轻量模型50ms）做第一层快速路由 + LLM做深度理解和生成</b>。原因是：① 客户问法变化无穷——"查一下""看看货到哪""我的快递呢"都是查轨迹，硬编码条件分支维护成本极高，微调后模型理解语义等价不依赖规则；② Agent需要追问能力——"您说的是哪个运单号？"调整意图需要交互而非死板路由；③ 转人工兜底——Agent发现无法处理时主动转人工，传统算法做不到。</p><p>P2微调项目中，我们对比过纯规则方案的意图识别准确率只有68%，微调后提到94%，差距明显。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">一-5: 只有三种意图，工程硬编码为什么不行？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三种意图的分析在我们P1项目中对应12个高频场景。如果只有3种而且回复模板固定，硬编码确实能跑。但实际中三个问题：</p><p><b>① 输入变化远超预期。</b>客户说"帮我查一下""货到哪了""看看物流""运单号KY123到了吗"——语义等价但表述完全不同。硬编码需要写正则匹配，永远有漏的。</p><p><b>② 回复质量要求自然。</b>硬编码拼接"您的运单KY123目前在XX分拨中心"生硬且无法处理异常。Agent可以"您的快递正在XX分拨中心进行分拣，预计明天上午送达"——主动带时效预测、语气自然。</p><p><b>③ 场景持续扩展。</b>数据飞轮每月发现新场景，意图覆盖率每月提升2-3%。硬编码加一个场景要改代码发版，迭代周期3天变3周。</p></p><div class="follow"><p><b>→ 运营成本下降</b>——改知识库/Prompt配置就能调整回复内容，不需要开发介入；<b>效果持续提升</b>——每月自动优化。</p></div></div></div>
 
 
+<div class="qa"><div class="qa-q" onclick="toggle(this)">二-1: ReAct和Plan&amp;Execute混合架构，什么场景用哪种？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>ReAct是"边想边做"——模型每推理一步就决定是否调用工具。Plan&amp;Execute是"先想好再做"——先规划出完整的步骤列表再按序执行。决策逻辑看两个维度：<b>步骤确定性</b>和<b>环境反馈频率</b>。</p><p>以P1语音客服为例：客户来电后，状态机先进入greeting→intent_detect→biz_handle→closing的固定流程，这是Plan阶段。但具体到intent_detect，模型需要根据客户的实时表述决定走哪个分支，这是ReAct阶段。我们的混合架构是：<b>状态机管流程（Plan），LLM管话术和工具调用（ReAct）</b>。状态机保证流程不乱跑，LLM保证对话自然。</p><p>如果步骤固定且最优解确定（比如查轨迹→查结果→回复），走Plan。需要根据中间结果动态调整（客户突然改口"等等我换一个条件"），走ReAct。先Plan后ReAct——Plan确定大方向，ReAct处理执行中的变化。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">二-2: 工具调用链路如何保证鲁棒性？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三层防护，全部来自P1语音客服和P4合规中台的经验：</p><p><b>超时+重试+熔断：</b>每个Tool设3s超时，失败指数退避重试3次（1s/2s/4s），连续5次失败触发熔断走降级。降级不是报错——LLM挂了走规则模板兜底、RAG挂了走缓存兜底、RTC挂了播预录提示转人工。凌晨供应商故障时200多通电话零感知切换规则模板。</p><p><b>输出校验：</b>P4中用Pydantic Schema校验Tool返回数据，类型不对、必填缺失直接丢弃不送LLM推理。比如OCR返回的价格字段是字符串"五百"而不是数字500，Schema拦截触发重新查询。</p><p><b>幻觉约束：</b>Prompt中明确写"只基于检索结果回答，不要编造"。P2三层评估中有专门的Faithfulness指标检测幻觉。P4中LLM只打标签提示风险，最终决策权在Drools规则引擎，防止幻觉导致不合规放行。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">二-3: 多Agent编排如何分工？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>我们的P5 Agent Harness有4个Sub-Agent：<b>implementer</b>负责编码实现+自检；<b>code-reviewer</b>负责两阶段审查（Stage 1 Spec Compliance → Stage 2 Code Quality）；<b>feedback-observer</b>静默记录用户纠正信号；<b>evolution-runner</b>扫描feedback积累生成进化建议。</p><p>P4合规中台虽然没有严格意义上的多Agent，但七步流程（单据解析→多源比对→合规审查→缺失项识别→自动补单→通关放行→复盘）中每个节点由不同组件协作：OCR引擎解析、Drools规则引擎做硬规则判断、LLM做软规则打标签。每个节点的输出是结构化Pydantic Schema，下个节点不用关心上游的原始格式。</p><p>核心设计原则：<b>职责边界清晰，每个Agent的Prompt里明确写"你只负责XXX，不要越界判断YYY"</b>。数据源统一，所有Agent查同一个API，不从各自记忆中瞎编。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">二-4: 为什么单独拆分工具管理？直接放主Prompt不行吗？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>以P3 MCP集群的经验来看，如果把所有Tool定义直接放主Agent的System Prompt，随着Tool数量增长（5个到20+），两个问题暴露：</p><p><b>① System Prompt过长导致注意力稀释。</b>Tool定义占用60% token预算，主Agent处理核心任务时注意力被分散。而且每次调用不管用不用Tool都要把所有定义过一遍，浪费token。MCP协议的解法是通过Tool Discovery机制让Agent在需要时再主动发现可用Tool，不预加载全部。</p><p><b>② 工具选择逻辑和业务逻辑耦合。</b>同一个Tool在不同场景下参数不同——查轨迹用运单号查，查时效用线路查。耦合在一起后一个改动要同步多个地方。MCP把Tool暴露为标准化的JSON Schema接口，参数映射逻辑在MCP Server端维护，Agent只需要说"我要查轨迹"，Server端负责参数提取。</p><p>MCP协议的价值就在于工具管理和业务逻辑的解耦——Agent不需要知道工具在哪、怎么调、参数怎么映射，只需要知道"有这么一个工具，参数是query和top_k"。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">二-5: MCP的Skill设计模式不需要独立工具Agent，你们为什么还要做？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>MCP解决了工具发现和标准化调用的问题，但不解决工具调用的编排问题。我们的P4合规中台场景里，工具调用不是一步到位，而是需要多轮协调的持续过程：先查HS编码→发现监管条件→再查准入认证→发现缺证书→再补单。每一步调什么工具取决于上一步返回了什么。</p><p>这种<b>依赖协调</b>光靠MCP的Tool Discovery是解决不了的——Agent需要知道"先做什么、再做什么、失败了怎么办"。我们在P4中用LangGraph表达这种编排逻辑：七步流程的每个节点是一个结构化步骤，节点之间通过State传递数据，条件分支决定下一步走向。</p><p>P5 Agent Harness中也是类似思路：主Agent（Controller）负责Task调度和上下文传递，implementer和code-reviewer只做自己被分配的事。不是"工具Agent替代MCP"，而是"MCP管工具发现和标准化，编排层管工具调用顺序和错误处理"，两者互补。</p></div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">三-1: 知识库文档切片怎么做？遇到的问题和优化？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P3 MCP集群中RAG知识库的切片策略：<b>Markdown文档按标题层级（##/###）切</b>，保留层级关系做结构化解构；<b>纯文本按段落+语义边界切</b>；<b>表格每行一个chunk+表头前缀</b>。切片大小控制在256-512 tokens。</p><p>遇到的最大问题是<b>边界截断导致语义丢失</b>——两个相关段落被切到不同的chunk，客户问题涉及两者时只能召回其中一个。解决方案：<b>Overlap策略</b>（chunk结尾重叠2-3句）+ <b>层级递归检索</b>（先查粗粒度chunk定位文档，再查细粒度chunk定位具体内容）。</p><p>持续优化：每周分析badcase中被标为"RAG不准"的case，判断是切片问题还是Embedding问题。切片问题调整该类型文档的策略（加大overlap、改用语义边界）。每月切片策略迭代2-3次，RAG命中率从72%最终优化到89%。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">三-2: 不同文档的差异化切片策略？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>客服对话记录：</b>按时间窗口30分钟+Embedding语义相似度切分。30分钟内+语义相关的不切，30分钟以上或语义不相关的拆成独立对话。</p><p><b>产品/价格文档：</b>按Markdown标题层级切分，保留层级树。检索时先匹配高标题（"价格说明→空运"）再匹配具体内容。客户问"空运价格"直接定位到子树chunk。</p><p><b>表格数据：</b>每行单独chunk+表头上下文前缀。如一行"上海→北京,3吨,空运,5000元"实际存入的是"运费对比表|出发地:上海|目的地:北京|方式:空运|价格:5000元"。检索时Embedding相似度更高。</p><p><b>PDF发票/面单：</b>先走版面分析区分文本区和表格区，文本区按段落切，表格区按行列转换后再切片。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">三-3: 召回命中率指标怎么定义？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>我们的核心指标是<b>Hit Rate@5</b>——Top-5检索结果中是否包含至少一个正确答案。不选Top-1的原因是客服场景中一个问题的答案可能存在于多个文档中（价格表/历史报价/合同），Top-1可能漏但Top-5里有一个对的就行。不选Top-10是方便后续Rerank。</p><p>辅助指标是<b>MRR（Mean Reciprocal Rank）</b>——正确答案在排序中的平均位置。我们的MRR从0.45提升到0.82，说明不仅命中了，命中的位置也更靠前了。这直接影响LLM生成质量——相关信息在输入中的占比越高，幻觉概率越低。</p><p>P2项目中Embedding微调前通用模型Hit Rate@5约72%，微调后提升到89%（5000对正负样本，RTX 4090上2小时训练）。加上Rerank和Query改写后最终到95%。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">三-4: 召回率从72%优化到95%做了哪些优化动作？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>六个动作，按收益排序：</p><p><b>① Embedding领域微调（+12%）。</b>对物流术语做领域微调，5000对正负样本，这是最有效的单一优化。② <b>混合检索Hybrid Search（+6%）。</b>稠密向量+BM25关键词+RRF合并，精准匹配运单号/价格数字时BM25非常有效。③ <b>Rerank精排（+3%）。</b>粗召回Top-20→Cross-Encoder精排取Top-5。④ <b>Query改写（+2%）。</b>检测到指代时做LLM改写消除歧义。⑤ <b>切片策略优化（+1%）。</b>固定长度切→语义边界+层级切。⑥ <b>Metadata过滤（+1%）。</b>根据客户画像（VIP等级/地域）过滤不相关的知识库集合。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">三-5: 切片/意图标注粒度过细或过粗的问题？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>切片过细</b>（&lt;100 tokens）：单个chunk信息不完整，LLM无法基于碎片生成完整回答。chunk数量暴增导致检索延迟上升。</p><p><b>切片过粗</b>（&gt;1000 tokens）：一个chunk含多个主题，检索命中时无法精确定位需要的部分。传给LLM的token浪费——只需要一段信息但要把整个大chunk传过去。</p><p><b>意图过细</b>（50种+）：不同意图边界模糊，分类准确率下降。长尾意图训练数据稀疏不可靠。我们在P2把意图从50+压到12种核心意图后，准确率从68%提到94%。</p><p><b>意图过粗</b>（3-5种）：不同业务场景被归为同一意图，后续流程无法差异化。比如"查轨迹"和"查时效"都归为"查询"，但查轨迹要调运单API，查时效要调线路API，流程完全不同。</p></div></div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">四-1: 全链路评价和质检体系如何搭建？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P2微调项目中沉淀的三层评估体系，后来推广到所有Agent项目：</p><p><b>第一层自动指标：</b>BLEU/ROUGE做快速排雷。如果自动指标比基线还差直接打回，不浪费人工评测资源。适合在训练过程中快速发现失败。</p><p><b>第二层人工盲评：</b>3名评估员各评50个case，用Cohen's Kappa（要求≥0.6）确保评分标准统一。第一次评测Kappa只有0.45，后来细化评分细则（"是否提到了预计到达时间"算一分）才提升到0.72。</p><p><b>第三层线上A/B：</b>5%流量跑一周，观察回复率、客户满意度、转人工率。P2中A/B测试验证了微调模型的回复率提升23%，转化率18.2% vs 人工19.7%（差距1.5个百分点，统计不显著）。</p><p>P5 Agent Harness在此基础上增加了质量门禁：Per-Task 2-Stage Review → Per-Phase四步走验证 → 冒烟测试，越内层越自动化越早发现问题。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">四-2: 评测用什么模型？输入数据是什么？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>评测模型用<b>GPT-4或豆包pro</b>做LLM-as-a-Judge，不是用自己的微调模型。避免评测偏差——用自己的模型评自己会产生"自我感觉良好"的假象。两者做交叉验证，结果不一致时取较低分。</p><p>输入数据分三部分：<b>① 原始Query</b>（客户说"我的货到哪了"）；<b>② Agent的完整回复</b>（待评测对象）；<b>③ 评测上下文</b>（包括检索到的知识库chunk、Tool返回结果、意图分类结果）。评测模型不是只看回复本身，而是对比"回复"和"检索结果"的一致性来判断幻觉。</p><p>给评测模型的Prompt包含评分标准和示例，要求输出结构化JSON：{faithfulness_score, completeness_score, issues: [...], verdict: "pass"|"review"|"fail"}。这个方案成本较高（每月约2000元），只在关键业务Agent上跑。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">四-3: 系统日志中如何筛选异常case？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>机器先筛，人工确认。</b>P1语音客服的数据飞轮中定义了三个自动触发信号：① 客户满意度评分&lt;3分；② 对话轮数&gt;10轮（说明模型没理解）；③ 客户主动说"转人工""找你们领导"。这三个信号的日志自动打badcase标签进入待审查队列。</p><p>运营同事每天花30分钟审这批badcase（约50-80条），用LLM预分类打初步标签（意图缺失/RAG不准/幻觉/流程bug/其他），运营只需要确认或修正。预分类准确率约80%，省掉大部分重复劳动。</p><p>确认后的badcase进入不同的优化队列：意图缺失→补充训练数据；RAG不准→更新知识库或调整切片；幻觉→优化Prompt+补充负样本到评测集。每个优化走回归测试→5%灰度→全量上线，闭环周期从2周压缩到3天。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">四-4: 评测模型是否挂载知识库？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>不挂载。</b>评测输入中已经包含了Agent检索到的知识库chunk，评测模型只需要对比"Agent回复"和"给定的chunk"的一致性。如果评测模型也挂知识库，它可能用自己的检索结果覆盖Agent的检索结果——Agent没用到的知识但评测模型自己查到了，误判通过。</p><p>但评测模型挂载了<b>历史badcase库</b>作为few-shot示例。Prompt里带3-5条历史badcase（"之前出现过：客户问X，Agent回了Y，但正确的应该是Z"），让评测模型知道"什么样的回复算badcase"。这个badcase库每月从已确认的badcase中采样更新。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">四-5: 评测打分标准是什么？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三个维度各0-5分：</p><p><b>准确率（Faithfulness）</b>——回复中的事实能否从检索结果或Tool返回数据中找到来源。无中生有扣分，引用正确加分。4分以下标记review。</p><p><b>完整性（Completeness）</b>——回复是否覆盖客户Query中的所有需求点。客户同时问了价格和时效，回复只说价格没提时效，扣分。3分以下fail。</p><p><b>合规性（Compliance）</b>——回复是否符合业务规范。价格报价必须含"有效期"提示、不允许使用"一定""肯定"等绝对化表述。硬规则由Drools规则引擎拦截，软规则由LLM检查。</p><p>最终判定：都≥4分→pass；任一3分→review（人工确认）；任一≤2分→fail（阻断发布）。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">四-6: 全新未知场景，评测模型识别不出异常，如何闭环？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三层兜底：</p><p><b>第一层规则兜底：</b>即使评测模型判断不出异常，业务规则引擎仍然在运行。报价超范围、推荐了禁运品、漏掉必填字段，规则引擎拦截并标为需人工复核。</p><p><b>第二层线上指标监控：</b>新场景上线24小时内重点监控转人工率、满意度、对话轮数。如果转人工率突然从12%飙到30%，自动触发降级切回人工兜底。这不是评测发现的，是业务指标发现的。</p><p><b>第三层快速反馈闭环：</b>一旦发现问题，新场景case进入badcase队列，运营24小时内标注，评测集3天内补充该场景测试case。核心是<b>闭环速度不超过72小时</b>——从发现到入库到可评测。</p><p>定期（每月）用线上样本刷新评测集，用真实badcase替代老case，保证评测集场景覆盖度≥80%。低于80%时优先补充新场景标注case。</p></div></div>
+</section>
+</div>
+<div class="tab-content" id="tab-lg-qa">
+<section id="lg-qa">
+<h2>LangChain &amp; LangGraph 高频面试题</h2>
+<div style="background:#f8f9fa;padding:15px 20px;border-radius:8px;margin:15px 0;font-size:14px;color:#555;">
+<b>说明：</b>题目覆盖LangChain/LangGraph核心概念、架构设计、与竞品对比，以及基于跨越速运P4项目的实战经验。
+</div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q1: LangGraph的核心概念是什么？StateGraph、Node、Edge分别是什么？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>LangGraph是一个基于<b>有向图（DAG）</b>的Agent工作流框架。三个核心概念：</p><p><b>StateGraph</b>——整个工作流的容器，定义了全局的State类型（所有节点共享的数据结构）。State是一个TypedDict或Pydantic BaseModel，每个节点可以读取和写入State中的字段。我们P4项目的State包含document_parse_result、compliance_report、missing_docs_list等字段，贯穿七步流程。</p><p><b>Node</b>——图中的节点，每个节点是一个Python函数（或可调用对象），接收State作为输入，返回State的增量更新。Node只修改自己关心的字段，不动的字段自动保持。P4中每个步骤是一个Node：parse_document_node、compare_node、compliance_check_node等。</p><p><b>Edge</b>——节点之间的连接，定义了执行顺序和条件分支。普通Edge表示"执行完A后执行B"，条件Edge（ConditionalEdge）根据State中的某个字段决定走哪个分支。P4中缺失项识别后走条件Edge：可自动补单的走auto_complete分支，需要人工介入的走manual_review分支。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q2: LangGraph的Checkpointer是什么？为什么P4项目选择了PostgreSQL Checkpointer？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>Checkpointer是LangGraph的状态持久化机制。每经过一个Node，Checkpointer自动保存当前State的快照到外部存储。支持interrupt/resume——流程挂起后可以从中断点恢复执行，服务重启也不丢状态。</p><p>P4选择PostgreSQL Checkpointer而不是内存或Redis，原因有三：<b>① 持久化需求</b>——合规审查经常跨天，关务专员下班挂起第二天继续，数据不能丢。Redis的TTL机制不适合跨天场景。<b>② 事务支持</b>——PostgreSQL支持ACID事务，State快照写入的原子性有保证。LangGraph的Checkpointer需要强一致性，PG天然满足。<b>③ 历史版本</b>——PG存储了所有checkpoint的历史版本，支持回滚到任意上一个checkpoint重新执行。调试时特别有用——发现某个Node的规则有bug，可以回滚到审查节点重新跑，不用从头解析单据。</p><p>一个完整的状态快照大概几百KB到几MB（主要是单证图片base64较大），我们把图片存在对象存储里，Checkpoint只存引用ID。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q3: LangGraph的interrupt/resume机制怎么实现的？跨天挂起数据会不会丢？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>当流程走到需要人工介入的节点（如P4中的高价值货物复核、合规审查"警告"判定、自动补单后仍不通过），调用interrupt()把当前State持久化到PostgreSQL Checkpointer。挂起内容包括：当前走到哪个节点、所有单证的解析结果、多源比对报告、合规审查结果、缺失项清单、自动补单记录。</p><p>然后发飞书通知给关务专员，审批人点开链接能看到完整的case档案。审批人点通过或驳回后，系统调用resume()恢复流程。即使挂起期间服务重启了，从PG中读出快照就能精确恢复，不会让客户重新提交。</p><p>Checkpointer每经过一个Node就自动保存一次，相当于给整个流程做了增量备份。支持回滚到任意历史版本——发现某步执行错误，rollback到之前的checkpoint重新执行，不用从头来。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q4: LangGraph和LangChain是什么关系？什么时候该用哪个？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>LangChain是LangGraph的基础层。LangChain提供LLM调用的抽象（ChatModel/LLMChain/PromptTemplate/OutputParser）、工具定义（Tool/Toolkits）、以及基础的Chain（LLMChain/SequentialChain）。LangGraph是在LangChain之上构建的<b>有向图工作流引擎</b>。</p><p>选型原则：<b>流程是直线且不需要条件分支</b>——用LangChain的SequentialChain就够了；<b>流程需要条件分支、循环、human-in-the-loop、持久化</b>——必须上LangGraph。</p><p>P4项目选LangGraph而不是LangChain的原因是合规审查的七步流程不是直线——缺失项识别后要走条件分支，需要人工介入挂起，需要Checkpointer持久化跨天恢复。这些LangChain的Chain做不了。</p><p>但如果只是简单的"查轨迹→生成回复"这种直线流程，用LangChain就够了，不需要引入LangGraph的复杂度。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q5: LangGraph和Temporal/Airflow/Camunda这些传统工作流引擎有什么区别？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>核心区别在于<b>节点里的逻辑由谁执行</b>。Temporal/Airflow/Camunda的节点是确定性代码——你写死了if/else就走固定分支。LangGraph的节点可以是LLM——你给一个判断标准，LLM根据上下文决定走哪条路。</p><p>以P4的合规审查为例："判断这个货物是否涉及FDA监管"。传统引擎需要写规则if contains("food"/"drug"/"cosmetic") then FDA_review。但"功能性饮料算food还是drug"这种边界case规则引擎搞不定。LangGraph的Node里放LLM，LLM根据语义理解判断"这个产品描述和FDA监管清单的匹配度"，然后条件Edge根据LLM的输出分流。</p><p>第二个区别是<b>状态管理</b>。Temporal的持久化基于事件溯源，恢复时要重放所有事件。如果某个事件是LLM生成的，重放时LLM可能生成不一样的结果，状态就不一致了。LangGraph的Checkpointer直接保存State快照，恢复时不需要重放。</p><p>所以选型建议：纯确定性的流程用Temporal/Camunda；需要LLM做决策节点的流程用LangGraph。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q6: LangGraph和LlamaIndex Workflows/LlamaIndex Agents有什么区别？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>两者定位不同。LangGraph是<b>通用Agent工作流引擎</b>——不限定业务场景，支持任意复杂的图结构（循环/分支/并行/嵌套），原生支持Checkpointer持久化和interrupt/resume。它的核心抽象是StateGraph+Node+Edge，和业务逻辑无关。</p><p>LlamaIndex Workflows是<b>RAG场景优先的工作流框架</b>——内置了大量RAG相关的组件（QueryEngine/Retriever/Index），适合快速搭建RAG应用。它的Workflow也是基于事件驱动的图结构，但更偏向检索场景。</p><p>选型建议：如果你的核心场景是<b>复杂的多步Agent流程+需要持久化和人工介入</b>（如P4合规中台），LangGraph更合适。如果你的核心场景是<b>RAG检索+问答</b>，LlamaIndex集成度更高，开箱即用。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q7: LangGraph的SubGraph是什么？怎么实现复用？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>SubGraph是把一个完整的LangGraph图封装成一个Node，嵌入到另一个更大的图中。每个SubGraph有自己的独立State和输入输出接口，主Graph通过输入参数把数据传给SubGraph，SubGraph执行完把结果返回给主Graph。</p><p>P4中虽然没有直接使用SubGraph，但设计中有类似场景：通知客户这个能力在多个异常流程中都会用到（延误了要通知、破损了要通知、丢件了也要通知）。如果不做复用，每个流程都要写一遍通知逻辑。SubGraph的解决思路就是把"通知"封装成一个独立的子图，三个异常流程共用同一个SubGraph。</p><p>SubGraph和主Graph的State通过输入输出接口显式传递，SubGraph不能直接访问主Graph的State。这样解耦干净，SubGraph内部怎么实现主Graph不关心。我们内部规定最多嵌套两层——再多调试困难。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q8: LangGraph的State管理怎么设计的？多人并发审批时状态冲突怎么解决？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>LangGraph的State是一个Pydantic BaseModel，所有Node共享。每个Node接收当前State，返回一个字典（增量更新），LangGraph框架自动合并到全局State中。Node不能直接修改State，只能返回增量更新——这保证了状态变更的可追溯性。</p><p>并发审批确实是个棘手问题。P4中Checkpointer自带了状态版本管理：每个checkpoint有version字段，写入时检查version是否和读取时一致。如果两个审批人同时加载了同一个State，A先提交（version从1跳到2），B再提交时发现本地version=1和当前version=2不一致，LangGraph会抛出异常，B需要重新加载最新State再审批。</p><p>但这还不够——业务上不能让B看到一个"审批冲突"的错误。我们的方案是在应用层加乐观锁：State中带一个locked_by字段，A批准时lock住，B的审批请求被提示"该case正在被XXX处理"。这个锁不在LangGraph框架层面，是在我们自己的业务逻辑里实现的。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q9: LangGraph的流式输出（Streaming）怎么实现的？和传统SSE有什么区别？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>LangGraph支持三种粒度的流式输出：① <b>Node-wise streaming</b>——每个Node执行完成后输出一个事件；② <b>LLM Token streaming</b>——LLM逐token输出，通过astream_events监听on_chat_model_stream事件；③ <b>Custom streaming</b>——在Node中手动emit自定义事件。</p><p>我们在P4中主要用第二种——用astream_events监听LLM的Token流，通过Server-Sent Events推给前端ReadableStream。这样用户不需要等LLM完整输出就能看到逐字生成的内容，首字延迟从优化前的8s降到3s。</p><p>和传统SSE的区别：传统SSE是服务器手动推事件，LangGraph的astream_events是框架自动派发事件，开发者只需要监听和转发。传统SSE需要手动管理连接生命周期，LangGraph的事件流和Graph执行生命周期绑定——Graph执行完毕事件流自动关闭。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q10: LangChain/LangGraph的PromptTemplate和常规字符串模板有什么区别？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>区别在于<b>与LLM生态的集成深度</b>。LangChain的PromptTemplate不仅是字符串模板，还支持：① 自动从F-string变量渲染，和常规模板一样；② MessageTemplate——区分system/user/assistant角色，FrameworkMessage自动处理角色切换；③ FewShotPromptTemplate——自动从示例集中选few-shot；④ Partial——预填充部分变量，生成子模板。</p><p>但说实话，在我们实际项目中（P1/P5），我们更多用YAML格式的Prompt模板（MCP Prompt原语），而不是LangChain的PromptTemplate。原因是YAML的可读性和版本diff更友好，运营同学可以直接在管理后台编辑。LangChain的PromptTemplate更适合代码中动态生成Prompt的场景。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q11: LangChain的Tool/Function Calling和直接调API有什么区别？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>LangChain的Tool抽象层解决的是<b>"模型决定调什么工具"</b>的问题。直接调API是代码决定调什么、什么时候调。Tool把API包装成模型可理解的Schema——包括工具描述、参数名、参数类型、必填/可选。模型通过Function Calling输出工具调用请求，LangChain框架负责解析请求、执行工具、返回结果给模型。</p><p>MCP协议在做的事情本质上和LangChain Tool一样——标准化工具暴露方式。区别是：LangChain Tool是Python库层面的抽象，只能在LangChain生态里用；MCP是协议层面的标准，任何语言/框架的Agent都可以通过MCP Client发现和调用MCP Server暴露的工具。</p><p>我们在P3中的实践是两者都用——内部Agent用LangChain Tool+FastAPI调用MCP Server，MCP Server负责工具注册和参数校验，LangChain负责工具发现和调用编排。两者各司其职。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q12: P4项目中LangGraph遇到的最大坑是什么？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>最大的坑是<b>State序列化兼容性</b>。P4的State包含Pydantic Schema定义的文档解析结果，随着项目迭代Schema字段会变化——新增字段、修改字段类型、重命名字段。问题出在：Checkpointer里存的历史State是基于旧Schema序列化的，用新Schema反序列化时会报错，导致从旧checkpoint恢复流程失败。</p><p>解决方案是<b>State Schema版本管理</b>：每个State版本用整数标记（v1/v2/v3），反序列化时先检查版本号，走对应版本的Schema做migration。Field变更只允许新增或添加Optional，不允许删除或改成不兼容类型。这个约束写在Code Review规范里——改动State Schema必须同时提供migration函数。</p><p>另一个坑是<b>Node的幂等性</b>——Checkpointer恢复时会重新执行Node，如果Node有副作用（比如发了通知、调了外部API），重复执行会导致重复通知。解决方案是把有副作用的Node设计成幂等的——调API前先查State中是否已有执行结果，有则跳过。或者在Node中加idempotency_key做去重。</p></div></div>
+</section>
 </div>
 
 <div class="tab-content" id="tab-ref">
@@ -979,6 +1174,7 @@ flowchart TB
 </div></div>
 </section>
 </div>
+
 </main>
 <script>
 function toggle(el){
