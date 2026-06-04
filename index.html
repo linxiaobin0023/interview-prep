@@ -77,6 +77,8 @@ section h2{font-size:22px;color:#1a1a2e;padding-bottom:10px;border-bottom:2px so
 <a href="#" onclick="switchTab('lg-qa');return false;">LangGraph</a>
 <a href="#" onclick="switchTab('ref');return false;">速查</a>
 <a href="#" onclick="switchTab('py-qa');return false;">Python</a>
+<a href="#" onclick="switchTab('agent-qa');return false;">Agent专题</a>
+<a href="#" onclick="switchTab('hc-qa');return false;">高并发</a>
 </nav>
 <main>
 <h1>面试准备 — 跨越速运 AI 中台</h1>
@@ -93,6 +95,8 @@ section h2{font-size:22px;color:#1a1a2e;padding-bottom:10px;border-bottom:2px so
 <button class="tab-btn" data-tab="lg-qa" onclick="switchTab('lg-qa')">LangGraph</button>
 <button class="tab-btn" data-tab="ref" onclick="switchTab('ref')">速查</button>
 <button class="tab-btn" data-tab="py-qa" onclick="switchTab('py-qa')">Python</button>
+<button class="tab-btn" data-tab="agent-qa" onclick="switchTab('agent-qa')">Agent专题</button>
+<button class="tab-btn" data-tab="hc-qa" onclick="switchTab('hc-qa')">高并发</button>
 </div>
 <div class="tab-content active" id="tab-overview">
 <div class="narrative" id="narrative">
@@ -1059,6 +1063,52 @@ flowchart TB
 <div class="qa"><div class="qa-q" onclick="toggle(this)">Q13: Pydantic 在 AI 工程中的作用？BaseModel 和 dataclass 的区别？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>Pydantic BaseModel 在 AI 工程中主要做三件事：<b>数据校验</b>——定义 Schema 后自动校验输入数据类型、范围、必填，类型错误直接报错不脏数据往下传；<b>序列化/反序列化</b>——model_dump()/model_validate_json() 做 JSON 和对象的互转，LangGraph 的 State 就是 Pydantic BaseModel，天然支持序列化到 Checkpointer；<b>JSON Mode</b> ——LLM 输出通过 with_structured_output 绑定 Pydantic Schema，保证 LLM 输出合法结构的 JSON。</p><p>和 dataclass 的区别：dataclass 是轻量级的数据容器，不做校验，性能稍好。Pydantic 每创建一个实例都会做校验，有额外开销。在 AI 工程中，P4合规中台选了 Pydantic——数据正确性比性能重要（单证信息错了会被海关退单）。P5 Agent Harness 的 Intent Spec 用 YAML 而非 Pydantic，因为 YAML 的可读性和版本 diff 对非技术人员更友好。</p></div></div>
 </section>
 </div>
+
+<div class="tab-content" id="tab-agent-qa">
+<section id="agent-qa">
+<h2>Agent 高频面试题（全面版）</h2>
+<div style="background:#f8f9fa;padding:15px 20px;border-radius:8px;margin:15px 0;font-size:14px;color:#555;">
+<b>说明：</b>覆盖 Agent 架构、记忆、工具、编排、评测、安全六大方向，基于跨越速运 P1-P5 项目经验。
+</div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【架构】主流Agent架构模式有哪些？各自优缺点？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>四种主流模式：<b>ReAct</b>（Reason+Act）——模型每推理一步决定是否调工具，边想边做。灵活但容易跑偏，需要设最大轮数限制。P1语音客服中LLM处理话术和Tool调用就是ReAct。<b>Plan&amp;Execute</b>——先规划完整步骤再执行，适合确定性任务。P4合规中台的七步流程本质上就是Plan。<b>Reflection</b>——生成回复后再自检一遍，适合对质量要求高的场景。我们评测Agent的环节用了Reflection。<b>Multi-Agent</b>——多个Agent分工协作。P5的implementer/code-reviewer/feedback-observer/evolution-runner就是Multi-Agent。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【架构】ReAct的循环怎么控制？如何防止死循环？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三个手段：<b>最大轮数限制</b>——P1中配了5轮上限，超过强制退出走兜底话术。<b>重复检测</b>——连续两次调用同一个Tool且参数完全一样，判定为循环直接退出。<b>语义停滞检测</b>——最近3轮生成的回复语义相似度超过阈值（cosine&gt;0.95），说明模型在原地打转，触发中断。中断后不是抛异常，是降级到规则模板回复或转人工。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【架构】什么时候用单Agent，什么时候用多Agent？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>选型看三个指标：<b>任务复杂度</b>——能拆成3个以上独立子任务且专业差异大，考虑多Agent。P5的4个Sub-Agent各司其职。<b>延迟敏感度</b>——多Agent有通信开销，TTFT要求&lt;1s的场景不适合。P1语音客服对延迟敏感，就是一个Agent+状态机。<b>维护成本</b>——多Agent的调试和评测更复杂，团队人手有限时优先单Agent。P4合规中台虽然是多步骤，但本质是单Agent+状态机，不是多Agent。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【记忆】Agent的记忆分哪几层？怎么实现？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三层：<b>短期对话记忆</b>——存最近N轮对话（P1中N=10，P3导购N=20），Redis存，TTL 30分钟。超过N轮做摘要压缩。<b>长期用户画像</b>——按user_id存PostgreSQL，每次对话结束后LLM提取关键信息UPSERT更新。90天不更新标记过期。<b>全局共享状态</b>——多Agent场景下所有Agent共享的上下文（当前运单号、已确认地址等），Redis存，带version字段做乐观锁防并发写。短期记忆T Lost in the Middle问题通过摘要压缩缓解。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【记忆】长对话的上下文窗口怎么管理？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三层管理：<b>最近N轮</b>（客服N=10，导购N=20）存在Redis直接送入Prompt。<b>超N轮的历史做摘要压缩</b>——用LLM把前面对话提炼为关键信息（诉求、情绪、待办），摘要+最近N轮一起送模型。摘要模板强制包含"诉求/情绪/待办"三个字段，缺一告警。<b>长期画像按需加载</b>——不每次全量加载，当前对话涉及相关话题时才查画像。P1中N=10来自历史数据统计——90%的客服对话在8轮内结束。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【工具】Function Calling的原理？和MCP协议的关系？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>Function Calling是模型的能力——模型在生成回复时输出一个结构化JSON（工具名称+参数），而不是自然语言。MCP是工具暴露的协议标准——定义工具的描述格式、参数Schema、如何被发现和调用。两者是互补关系：FC解决"模型知道要调工具"，MCP解决"模型知道工具有哪些、怎么调"。P3中MCP把Tool标准化暴露，Agent通过FC调用。不用MCP也能用FC，但每个API的鉴权/参数/错误处理都要硬编码。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【编排】多Agent之间怎么通信？协作模式有哪些？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>两种主流模式：<b>中心化（Orchestrator）</b>——一个主Agent负责调度，子Agent只执行。P5的Controller+implementer/code-reviewer就是中心化。主Agent负责Task拆分、上下文传递、结果汇总。优势是可控、易于调试。<b>去中心化（A2A）</b>——Agent之间直接通信，每个Agent既是服务提供者也是消费者。适合灵活的长流程任务，但调试困难，且Agent之间没有统一的通信协议。跨越速运主要用中心化模式，因为可预测性和可控性更重要。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【评测】Agent的评测和传统软件评测有什么区别？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>核心区别在于<b>输出空间</b>——传统软件的输出是确定的（返回200或404，插入成功或失败），Agent的输出是开放的（同一句话有无数种合法回答）。P2的三层评估体系就是针对这个设计的：第一层自动指标（BLEU/ROUGE）做快速排雷；第二层人工盲评（Cohen's Kappa确保一致性）做质量把关；第三层线上A/B看业务指标。额外的挑战是<b>评测数据新鲜度</b>——Prompt过拟合和评测集泄露比传统软件严重得多。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【安全】怎么防止Prompt注入攻击？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三层防护：<b>输入过滤</b>——用户输入先过一层关键词检测（"忽略之前的指令""忘记你的身份"等模式），命中时告警+拒绝执行。<b>输出校验</b>——LLM回复中包含不应出现的内容（如系统指令、API Key）时拦截并返回兜底话术。<b>权限隔离</b>——敏感操作（修改地址、发起赔付）必须二次确认，不给模型直接执行高风险操作的权限。P1中还做了System Prompt的"角色隔离"——Prompt中明确写"你是物流客服，只回答物流相关问题"。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【框架】LangChain、LlamaIndex、CrewAI、AutoGen怎么选？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>LangChain</b>——生态最成熟，组件最全，适合需要灵活编排的复杂场景。P4选LangGraph（LangChain生态）因为需要Checkpointer持久化和interrupt/resume。<b>LlamaIndex</b>——RAG场景优先，内置检索/索引/查询组件，适合知识库问答。不如LangGraph灵活但开箱即用度更高。<b>CrewAI</b>——多Agent协作框架，角色定义简单，适合快速搭建多Agent原型。复杂度和灵活性之间。<b>AutoGen</b>——微软的多Agent对话框架，支持Agent之间的自由对话，适合研究探索。生产环境稳定性待验证。跨越速运选LangChain的核心原因是成熟度和Checkpointer功能。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【容错】Agent调用链路中的错误怎么处理？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三层防护：<b>第一层per-call</b>——每个Tool调用3s超时，失败重试3次（1s/2s/4s指数退避），连续5次熔断。不是直接报错，走降级。P1中LLM挂了走规则模板兜底，RAG挂了走缓存兜底。<b>第二层per-Task</b>——P5中implementer返回结构化报告（DONE/BLOCKED/NEEDS_CONTEXT），主Agent根据状态决定重试/跳过/降级。<b>第三层per-Phase</b>——P5四步走验证发现集成问题时终止当前Phase，修复后重新验证。关键设计是<b>有状态降级</b>——降级不等于崩溃，而是以较低质量继续服务。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">【数据飞轮】Agent上线后效果衰减怎么办？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P1的数据飞轮是解决这个问题的：<b>自动发现badcase</b>——满意度&lt;3分/轮数&gt;10/主动转人工三种信号触发；<b>LLM预分类+人工确认</b>——分意图缺失/RAG不准/幻觉/流程bug四类进入不同优化队列；<b>优化执行</b>——每类进入对应的优化路径；<b>回归测试+5%灰度</b>——先跑评测集确保不降级，再切5%流量A/B验证，效果好的逐步全量。闭环周期从2周压到3天，意图覆盖率每月提升2-3%。</p></div></div>
+</section>
+</div>
+
+
+<div class="tab-content" id="tab-hc-qa">
+<section id="hc-qa">
+<h2>AI 高并发 &amp; 容灾 面试题</h2>
+<div style="background:#f8f9fa;padding:15px 20px;border-radius:8px;margin:15px 0;font-size:14px;color:#555;">
+<b>说明：</b>基于跨越速运 AI 中台实战经验，覆盖限流、熔断、降级、超时控制、弹性伸缩、容灾等高频面试方向。
+</div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q1: AI系统和传统Web系统在高并发上的核心区别？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三个核心区别：<b>① 响应时间差异巨大</b>——传统API响应通常在50-200ms，AI系统（特别是LLM推理）在1-5s甚至更久。这意味着AI系统的连接池和线程模型需要完全不同的设计，简单的"加机器"不一定有效。<b>② 成本敏感</b>——传统Web高并发主要关心CPU和带宽，AI系统还要关心Token消耗——单一请求的Token成本是传统API的上百倍。P1中通过Max Token分级控制+模型路由（lite处理80%简单请求）大幅降低成本。<b>③ 降级策略不同</b>——传统Web降级是"返回缓存数据或错误提示"，AI系统降级需要设计有状态的语义降级（如LLM挂了走规则模板、RAG挂了走缓存），保证用户无感知。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q2: 全链路容灾降级怎么设计？以P1语音客服为例。<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P1语音客服的分层降级策略：<b>RTC层</b>——ASR挂了走预录提示"当前信号不好请稍后再试"+自动排转人工。TTS挂了，LLM生成的文本通过预存模板映射成固定语音片段播报。<b>LLM层</b>——LLM推理超时报错时，状态机切到rule_fallback状态，走规则模板回复。规则模板覆盖Top-80%高频意图，回复没那么自然但信息准确。<b>RAG层</b>——向量库检索失败走Redis缓存热点答案，再不行走通用物流知识让LLM基于预存知识回答。每层都有熔断机制——连续5次失败触发熔断，30秒后半开探测。凌晨供应商升级时200多通电话零感知切换规则模板，全面验证了这套设计。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q3: 限流策略怎么设计？Token配额怎么管理？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P3 MCP网关的限流分三层：<b>接口级限流</b>——每个API Key配QPS上限，超过返回429。用Redis的滑动窗口实现，精度1s。<b>Token配额限流</b>——每个业务线按月分配Token预算，用完触发降级（不拒绝，走缓存兜底）。用Redis计数器实现，每天重置。<b>优先级调度</b>——语音客服等高优业务有独立的资源池，不被其他业务的峰值抢占。入口处通过API Key识别业务线，路由到对应配额管理器。监控通过Prometheus+Grafana展示实时Token消耗和QPS，接近阈值时自动告警。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q4: 熔断（Circuit Breaker）的实现原理和参数配置？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>熔断器三个状态：<b>Closed（关闭）</b>——正常转发请求，统计失败率。P1中配置5次连续失败触发切换。<b>Open（开启）</b>——直接拒绝请求走降级，不发起真实调用。P1中配置30秒冷却时间。<b>Half-Open（半开）</b>——冷却时间到后放少量探测请求，探测成功则恢复Closed，失败则回到Open。关键参数：失败阈值（P1设连续5次，传统服务通常用比例如50%），因为AI服务失败的影响比传统服务大；冷却时间（P1设30秒，传统服务通常5-10秒），因为AI服务恢复慢；探测请求数（P1设1次）。熔断器粒度是每个下游服务独立——LLM挂了不影响RAG，RAG挂了不影响TTS。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q5: 超时控制怎么做？AI系统的超时和传统系统有什么不同？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>传统系统的超时通常是固定的（如500ms/1s），AI系统的超时需要<b>分层+动态</b>。P1中的设计：<b>ASR层300-500ms</b>——流式识别边说边转。<b>LLM推理层</b>——简单query（lite模型）设3s，复杂query（pro模型）设8s，因为不同的推理复杂度需要不同的时间。<b>RAG检索层100ms</b>——纯向量检索应该在毫秒级完成。超时的处理不是简单抛错——LLM超时了不是告诉用户"系统繁忙"，而是用规则模板回复。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q6: 缓存策略在AI系统中怎么设计？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>三层缓存：<b>本地缓存（Caffeine）</b>——热点数据的毫秒级访问，TTL秒级。P1 Redis前的二级缓存，Redis挂了本地缓存撑几秒。<b>Redis分布式缓存</b>——RAG检索结果缓存（Query Embedding→Top-K文档ID，命中率30-40%，TTL按知识库更新频率5min-1h）。LLM生成结果缓存（语义相似度匹配，命中率15-20%）。<b>CDN/L2</b>——静态FAQ、常见问题答案等几乎不变的走CDN。粒度控制：时效敏感场景（查轨迹、查运费）只缓存检索不缓存生成，确保信息不过时。缓存失效策略：知识库更新时主动失效相关Query的缓存，不是等TTL过期。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q7: 弹性伸缩怎么做？Serverless在AI场景的适用性？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P3 MCP集群部署在阿里云Serverless（FC+SAE）。<b>函数计算FC</b>适合无状态服务（RAG检索、Prompt渲染）——按调用次数计费，流量低时缩到零实例省钱。冷启动1-2s，核心服务配最低保留实例保证warmed-up。<b>SAE</b>适合常驻服务（会话记忆、LLM网关）——不能缩到零因为要维护长连接和内存状态。弹性伸缩策略：CPU使用率&gt;70%扩容，&lt;30%缩容，每次扩缩至少保持1分钟观察期防止抖动。P3的经验：Serverless适合请求处理完就结束的无状态服务，不适合需要保持长连接或内存缓存的服务。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q8: 消息队列在AI系统中的作用？怎么选型？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P4合规中台用RocketMQ做异步消息：通关放行后的数据回传、复盘报告的异步分发。消息队列解决AI系统中的三个问题：<b>解耦</b>——AI推理环节和后续的持久化/通知环节通过MQ解耦，AI挂了下游不阻塞。<b>削峰填谷</b>——客服白天流量高峰，RocketMQ缓冲后落盘，下游消费端按能力处理。<b>重试和死信</b>——消费失败的消息自动进入重试队列（最多16次），超过进入死信队列人工排查。为什么选RocketMQ而不是Kafka：Kafka适合大吞吐日志流，RocketMQ适合业务消息的精确投递和事务消息。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q9: 全链路追踪（Trace）怎么实现？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P1-P5统一用<b>structlog+LangSmith</b>实现全链路追踪。每层传递trace_id：用户请求入口生成trace_id→ASR阶段记录→LLM调用时trace_id传给LangSmith→RAG检索trace_id关联检索结果→TTS输出trace_id记录播报完成。LangSmith记录LLM调用的输入输出/Token消耗/延迟，structlog输出结构化JSON打到ELK。Trace采样策略：错误请求100%采集，成功请求10%采样。P4中还结合了LangGraph的Thread-ID：Thread-ID管流程实例，Trace-ID管请求维度，两者拼接作为全局追踪ID。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q10: 优雅关闭（Graceful Shutdown）怎么实现？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P3 MCP Server的优雅关闭流程：收到SIGTERM信号→停止接收新请求（从注册中心注销，网关不再分发流量）→等待进行中的请求处理完（配置30s超时，超时强制结束）→持久化内存状态（如有）→关闭连接池/线程池→退出进程。Kubernetes中配合preStop Hook使用——先调API从Service摘除，等30s再发SIGTERM。关键点：<b>先从注册中心注销再等现有请求完成</b>——顺序不能反，先注销保证新流量不进来，再等旧请求处理完。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q11: 幂等性设计在AI系统中的重要性？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P4 LangGraph的Checkpointer恢复时会重新执行Node，如果Node有副作用（发了通知、调了外部结算API），重复执行会导致重复通知/重复扣费。幂等性方案：<b>幂等键（Idempotency Key）</b>——每个请求/Node执行携带唯一ID，下游服务检查是否已处理过，已处理直接返回上次结果。<b>状态检查</b>——Node执行前先查State中是否已有执行结果，有则跳过。P1中"创建工单"这个Tool就是幂等的——重试时先查运单号是否已有工单，有则返回已有工单号不创建新工单。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">Q12: 数据库（PG/Redis）在AI高并发场景下的瓶颈怎么优化？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P3的经验：<b>Redis</b>——短期会话记忆的TTL策略（30分钟），热点key分散到多个实例避免单点瓶颈。Redis Cluster做分片。<b>PostgreSQL</b>——用户画像表和LangGraph Checkpointer表的慢查询优化：画像表按user_id分表，避免单表过大；Checkpointer的历史版本定时归档（7天前的移到冷存储）。连接池配置：PG最大连接数100，超过排队等待，应用层用pgbouncer做连接池复用。向量检索用pgvector的HNSW索引，百万级向量下查询10ms内。</p></div></div>
+</section>
+</div>
+
 </main>
 <script>
 function toggle(el){
