@@ -80,6 +80,7 @@ section h2{font-size:22px;color:#1a1a2e;padding-bottom:10px;border-bottom:2px so
 <a href="#" onclick="switchTab('agent-qa');return false;">Agent专题</a>
 <a href="#" onclick="switchTab('hc-qa');return false;">高并发</a>
 <a href="#" onclick="switchTab('scenario');return false;">场景题</a>
+<a href="#" onclick="switchTab('pitfalls');return false;">项目难点</a>
 </nav>
 <main>
 <h1>面试准备 — 跨越速运 AI 中台</h1>
@@ -99,6 +100,7 @@ section h2{font-size:22px;color:#1a1a2e;padding-bottom:10px;border-bottom:2px so
 <button class="tab-btn" data-tab="agent-qa" onclick="switchTab('agent-qa')">Agent专题</button>
 <button class="tab-btn" data-tab="hc-qa" onclick="switchTab('hc-qa')">高并发</button>
 <button class="tab-btn" data-tab="scenario" onclick="switchTab('scenario')">场景题</button>
+<button class="tab-btn" data-tab="pitfalls" onclick="switchTab('pitfalls')">项目难点</button>
 </div>
 <div class="tab-content active" id="tab-overview">
 <div class="narrative" id="narrative">
@@ -629,11 +631,14 @@ Phase 2：货物类型 + 目的国 → Neo4j知识图谱 → LLM生成Cypher →
 <b>技术栈：</b>五阶段SDLC(Spec→Design→Plan→Build→Evolve) / 4 Sub-Agent(implementer/code-reviewer/feedback-observer/evolution-runner) / 11 Skills / 6 Hooks(PreToolUse/PostToolUse/UserPromptSubmit/SessionStart/Stop) / DAG并行Phase调度 / Sub-Agent隔离 / 验证即证据门禁 / Markdown Spec+Plan / MCP Design-to-Code / feedback进化引擎。<br>
 <b>关键效果：</b>从0到1产品交付周期压缩50%+，代码质量通过两阶段审查+四步走验证保证，团队经验通过进化引擎持续沉淀为规则，新人上手从2周缩短到3天。
 </div>
-<div class="narrative"><strong>面试话术：</strong>Agent Harness不是针对AI Agent开发的，而是一套<b>完整的软件开发全生命周期工程框架</b>，跑在Claude Code之上。核心架构分五层：<b>主控层（CLAUDE.md）</b>定义角色和流程路由；<b>Sub-Agent调度层</b>派发4个专用Agent（implementer负责编码、code-reviewer负责两阶段审查、feedback-observer静默记录反馈、evolution-runner扫描进化信号）；<b>Skills能力层</b>封装了11个可调用Skill，覆盖从需求收集(product-spec-builder)到发布(release-builder)的完整链路；<b>Hooks事件层</b>挂载6个脚本在PreToolUse/PostToolUse/UserPromptSubmit等生命周期事件上，自动做编译检查、端口清理、反馈检测、自动推送；<b>进化引擎层</b>四层递进——feedback静默记录→3+次出现自动提议规则毕业→Skill评分低提议优化→新模式5+次提议创建新Skill。<br><br>
-开发时核心流程是五阶段SDLC：<b>Spec</b>（product-spec-builder通过追问生成完整需求文档）→<b>Design</b>（design-brief + design-maker通过MCP对接Pencil/Figma出设计稿）→<b>Plan</b>（dev-planner按无占位符原则拆分为原子化Phase和Task）→<b>Build</b>（dev-builder驱动per-Task实现循环：编码→自检→派发code-reviewer两阶段审查→修复→commit，全部Task完成后执行四步走Phase验证）→<b>Evolve</b>（进化引擎自动沉淀经验）。<br><br>
-三大工程纪律铁律：<b>验证即证据</b>——每个完成声明必须现场附上新鲜验证输出，不接受"之前测过了"；<b>Sub-Agent隔离</b>——每个Task一个fresh实例，不继承session历史，防止Task A的错误假设污染Task B；<b>反合理化清单</b>——预定义AI最容易跳过规则的借口和正确做法（"这个很简单直接写就行"→"Plan Mode不看复杂度看纪律"）。<br><br>
-Hooks层是独特的自动化防线：<b>detect-feedback-signal.sh</b>在UserPromptSubmit事件中检测用户是否在纠正AI（匹配"不是这样""搞错了""你漏了"等30+种模式），命中时注入信号强制派发feedback-observer；<b>pre-commit-check.sh</b>在git commit前自动跑tsc --noEmit，编译不通过阻止提交；<b>auto-push.sh</b>在commit后自动推送到远程。<br><br>
-关键坑有两个：一是早期per-Task review-fix循环的编译验证太宽松，允许"跳过tsc直接commit"导致问题后置，后来用pre-commit-check Hook硬性阻断才根治。二是进化引擎初期提议太频繁打扰用户，后来加了"occurrences≥3才提议、用户只确认不跳过"的收敛策略。</div>
+<div class="narrative"><strong>面试话术：</strong>Agent Harness的核心是<b>三层架构</b>：顶层规则（CLAUDE.md）、技能体系（Skills）、进化系统（Evolution Engine）。<br><br>
+<b>顶层规则就是 CLAUDE.md</b>，定义了整个团队的角色和工作流程。<br><br>
+<b>技能体系一共有 11 个 Skill</b>，覆盖产品开发完整链路：product-spec-builder（需求收集）→ design-brief-builder（设计规范）→ design-maker（画设计图）→ dev-planner（开发计划）→ dev-builder（写代码）→ bug-fixer（修Bug）→ code-review（代码审查）→ release-builder（构建发布）。每个 Skill 都是独立的，有自己的触发条件和执行流程。<br><br>
+以 Bug Fixer 为例，不是看到报错就试着改，而是<b>四阶段系统性调试</b>：先收集证据→再分析模式→提出假设并验证→实施修复。核心原则：不猜测、没有证据不下结论、一次只改一个地方、改完回归验证（修A不破坏B）。<br><br>
+<b>执行层面有 4 个 Sub-Agent</b>：Implementer（写代码）、Code Reviewer（代码审查）、Observer（记录反馈）、Evolution Runner（扫描反馈、生成计划建议）。<b>重要原则：Sub-Agent 隔离</b>——每个 Task 都用全新实例，不复用、不继承之前的上下文。因为带着之前 Task 的记忆做下一个 Task，错误假设可能污染后面的判断。隔离才能保证干净执行。<br><br>
+光靠自然语言让 AI 决定何时做什么不靠谱，所以设计了 <b>Hook 机制兜底</b>：Pre-commit Check（每次 commit 前自动编译检测，不通过阻止 commit）；Auto Push（commit 成功后自动推送到远程仓库）；Stop Gate（Agent 准备停下时检查是否还有未 Review 的代码）；Detect Feedback Signal（检测用户消息中的"修正"或"不满意"关键词，提醒主 Agent 记录反馈）。反馈记录是半自动的——很多时候不用专门说"记下来"，系统自己就能捕捉到。<br><br>
+<b>这套方案越用越好，进化分为四层</b>：第一层用户给反馈，系统静默记录；第二层同一条反馈出现 3 次以上→毕业升级为 Skill 里的正式规则；第三层某个 Skill 反馈评分持续偏低→系统提议优化该 Skill；第四层某操作模式反复出现但没有 Skill 覆盖→系统提议创建全新的 Skill。整个过程对用户无感——记录和扫描在后台完成，只有生成具体建议时才轻轻提示。每条建议都需要你确认才会执行。<br><br>
+<b>总结：Skill 管流程，Agent 管执行，Hook 负责兜底，进化管成长。</b></div>
 <div style="background:#e8f5e9;padding:12px 20px;border-radius:6px;margin:12px 0;font-size:14px;color:#2e7d32;border-left:4px solid #4CAF50;">
 <b>项目出彩部分：</b>① <strong>五层架构设计</strong>（主控→Sub-Agent→Skills→Hooks→进化引擎）——不是简单的流程文档，是一套可运行的工程化系统。② <strong>Sub-Agent隔离 + 验证即证据 + 反合理化清单</strong>三条铁律——解决了AI辅助开发中"看起来快了实际质量崩了"的核心矛盾。③ <strong>6个Hook自动化防线</strong>——在PreToolUse自动编译检查、UserPromptSubmit自动检测修正信号、PostToolUse自动推送，零人工干预。④ <strong>进化引擎四层递进</strong>——feedback→规则毕业→Skill优化→新Skill创建，框架越用越贴合团队。
 </div>
@@ -1130,6 +1135,24 @@ flowchart TB
 <div class="qa"><div class="qa-q" onclick="toggle(this)">场景9: 模型效果上线后持续衰减，客户满意度逐月下降，怎么建立持续优化机制？<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P1数据飞轮的完整方案：<b>自动发现badcase</b>——三个信号触发（满意度&lt;3分/对话轮数&gt;10/主动转人工），日志自动打标进入待审队列。<b>LLM预分类+人工确认</b>——预分类准确率80%，运营每天审50-80条，分意图缺失/RAG不准/幻觉/流程bug四类进入不同优化队列。</p><p><b>专项优化</b>——意图缺失→补充训练数据；RAG不准→更新知识库或调整切片策略；幻觉→优化Prompt约束+补充负样本到评测集；流程bug→修状态机配置。</p><p><b>回归验证</b>——改完后先跑评测集确保不降分→5%灰度A/B→看指标变化→全量上线。</p><p><b>闭环周期</b>——从2周压缩到3天的关键：LLM预分类省掉人工从头分类的时间+CI自动评测省掉等别人验证的时间+灰度自动化省掉手动切流量的时间。</p></div></div>
 <div class="qa"><div class="qa-q" onclick="toggle(this)">场景10: 设计一个AI辅助编码的工程框架，保证代码质量和工程纪律。<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P5 Agent Harness的完整方案。核心架构五层：<b>主控层</b>（CLAUDE.md定义角色和流程路由）→ <b>Sub-Agent层</b>（implementer编码+自检、code-reviewer两阶段审查、feedback-observer静默记录、evolution-runner扫描进化）→ <b>Skills层</b>（11个可调用Skill，覆盖Spec→Design→Plan→Build→Evolve全链路）→ <b>Hooks层</b>（6个脚本挂载在PreToolUse/PostToolUse等事件上自动做编译检查/反馈检测/自动推送）→ <b>进化引擎层</b>（feedback→3+次规则毕业→Skill优化→新模式创建）。</p><p>核心工程纪律三条：<b>验证即证据</b>——完成声明必须现场附验证输出；<b>Sub-Agent隔离</b>——每Task fresh实例防错误污染；<b>反合理化清单</b>——预定义AI跳过的借口和正确做法。关键效果：从2周压缩到3天，事故月均3-4次降到0-1次。</p></div></div>
 <div class="qa"><div class="qa-q" onclick="toggle(this)">场景11: 系统一段时间运行后，如何做技术架构的复盘和演进规划？<span class="diff d1">⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p>P4合规中台的Phase 2规划——GraphRAG是典型的"发现问题→规划演进"的案例：</p><p><b>问题发现</b>——Drools+LLM能覆盖80%的合规审查场景，但遇到3层以上的链式规则（锂电池→德国→UN38.3→指定检测机构），规则引擎需要写死每一层路径，维护成本随国家数和品类数线性增长。</p><p><b>方案设计</b>——引入GraphRAG层：货物类型/目的国/法规/认证要求建Neo4j知识图谱，LLM把自然语言查询转Cypher做链式推理。GraphRAG负责推理发现"隐藏关联"，Drools负责最终决策执行。</p><p><b>ROI判断</b>——当前规则200多条，人工维护每月2人天。上图谱需要1-2个月构建Schema+实体，ROI在当前规模下不划算。触发条件：规则超500条或业务扩展到10+国家。</p><p>做技术演进的核心原则：<b>不为了新技术用新技术，等业务复杂度到了那个临界点再上。</b></p></div></div>
+</section>
+</div>
+
+
+<div class="tab-content" id="tab-pitfalls">
+<section id="pitfalls">
+<h2>项目难点总结 — 面试高频"踩坑"题</h2>
+<div style="background:#f8f9fa;padding:15px 20px;border-radius:8px;margin:15px 0;font-size:14px;color:#555;">
+<b>说明：</b>面试中"你遇到过最大的挑战是什么"是最容易被问到的。以下 7 个难点覆盖了 AI 工程化的核心维度，建议面试前挑 3 个最熟的准备好。
+</div>
+
+<div class="qa"><div class="qa-q" onclick="toggle(this)">难点1【P1 语音客服】TTFT 首字延迟 15s→2s，怎么做到的？<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>问题：</b>上线后客户打完电话要等 15 秒才听到第一个字，体验极差，很多客户直接挂断重拨。</p><p><b>排查：</b>发现每次对话的 System Prompt 和 RAG 结果都要重新编码，token 量很大（约 2000 tokens），LLM 推理占了 80% 的延迟。</p><p><b>方案：</b>三个优化叠加——① 固定 RAG 片段排序规则，触发模型的 Prefix Caching（命中率 70-80%，省约 1000 token 编码时间）；② 合并 System Prompt 消息体，减少 KV Cache 重复计算；③ 简单意图（查轨迹/问时效）直接走 doubao-lite 而不是 pro 模型，推理快一个数量级。</p><p><b>结果：</b>TTFT 从 15s 压到 2s 以内。ASR 流式优化贡献约 2s，LLM 优化贡献约 10s，TTS 流式优化贡献约 1s。</p><p><b>反思：</b>这个问题的本质是<b>系统级性能优化不是单一瓶颈，而是每个环节都要抠。</b>一开始只盯着 LLM 优化，后来才意识到 ASR 和 TTS 也有优化空间。先做 profiling 找到真正的瓶颈再动手，不要凭感觉猜。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">难点2【P1 语音客服】LLM 供应商凌晨故障，200+通电话零感知兜底<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>问题：</b>凌晨 LLM 供应商做升级未通知，连续报错触发熔断。语音客服挂了客户会直接投诉。</p><p><b>方案：</b>之前设计了分层降级策略——LLM 层挂了状态机自动切到 rule_fallback 状态，走规则模板回复（覆盖 Top-80% 高频意图）。每层都有熔断机制：连续 5 次失败触发熔断，30 秒后半开探测，探测成功恢复全流量。</p><p><b>结果：</b>那一个小时 200 多通来电全部正常服务，没有一个客户听到错误提示。早上收到监控告警才知晚上出了故障。</p><p><b>反思：</b>这件事验证了<b>容灾设计不是白做的——你在架构上偷的懒，总有一天会在凌晨 3 点还给你。</b>关键设计决策：降级不是报错，是以较低质量继续服务；熔断粒度是每个下游服务独立——LLM 挂了不影响 RAG，RAG 挂了不影响 TTS。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">难点3【P2 微调】1000+条原始数据，洗完只剩200条，数据质量vs数据量的平衡<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>问题：</b>原始聊天记录 1000+ 条，直接扔进去训练，模型学了很多废话——表情包、撤回消息、客服发错又撤回的链接。但清洗标准太严导致数据量不够，标准太松又影响模型质量。</p><p><b>方案：</b>四步清洗 Pipeline——① 过滤非文本消息（图片/语音/表情包/撤回）；② 多轮对话切分（30 分钟时间窗口 + Embedding 语义相似度）；③ 两层脱敏（正则匹配手机号/地址 + NER 识别人名/公司名，准确率 98%）；④ LLM 多维度评分（完整性/销售技巧/产品知识/语言质量/转化潜力），只保留 4 分以上。洗完只剩 200 段，筛选比例 20%。</p><p><b>反思：</b>如果重来，我会把原始采集范围扩大到 2000 条起步，而不是在 1000 条里反复筛选。数据质量固然重要，但<b>数据量不足时模型学不到足够的领域知识</b>，质量再好也白搭。200 段数据在长尾场景上表现不稳定，500 段以上是基本要求。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">难点4【P2 微调】过拟合：10个epoch训练loss降到0.1，但验证集评分反而变差<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>问题：</b>第一批 200 条数据跑了 10 个 epoch，训练 loss 降到 0.1 但验证集评分比训练中期还低。模型把训练数据背下来了，但没学会泛化。</p><p><b>方案：</b>四个方向——① 数据增强（同一意图不同表述扩充）；② 增大 LoRA dropout（从 0.1 提到 0.3）；③ 早停 Early Stopping（监控验证集 loss，连续 3 epoch 无改善停止）；④ 减少 rank 和 epoch（rank=64, epoch=10→5）。</p><p><b>反思：</b><b>训练充分不等于效果好，过拟合比欠拟合更难发现和修复。</b>因为训练指标一直很好看，没人会主动去怀疑模型在"背答案"。验证集必须和训练集分布一致但完全不重叠，且每个意图类型都要有覆盖。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">难点5【P3 MCP】多租户隔离：业务团队要求完全隔离，但成本扛不住<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>问题：</b>多个业务线共享 MCP 集群，语音客服团队说"我们的数据绝对不能和导购的混在一起"，要求完全隔离——独立部署、独立存储。但完全隔离意味着每个业务线要建一套 RAG 和一套记忆服务，成本翻倍。</p><p><b>博弈点：</b>隔离是合规要求（客服投诉记录和导购购买偏好不应该混在一起），但物理隔离在经济上不可持续。</p><p><b>方案：</b>逻辑隔离 + 物理共享——RAG 用 project_id 前缀隔离 Collection；记忆用 (user_id, project_id) 复合主键隔离；网关用独立 API Key + Token 配额隔离。底层物理存储共享，但逻辑上数据完全不串。</p><p><b>反思：</b><b>不是所有"完全隔离"的需求都是真的。</b>业务团队说"完全隔离"其实是怕数据串了出问题，逻辑隔离能解决这个顾虑。真正需要物理隔离的场景是合规审计要求，不能靠技术方案绕过去。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">难点6【P4 LangGraph】State Schema版本兼容性导致历史流程恢复失败<span class="diff d3">⭐⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>问题：</b>P4 的 State 包含 Pydantic Schema 定义的文档解析结果。项目迭代中 Schema 字段增加了（比如加了"报关行备注"字段），但 Checkpointer 里存的历史 State 是用旧 Schema 序列化的，用新 Schema 反序列化时报错。跨天合规审查走到一半，服务重启后恢复流程失败。</p><p><b>根因：</b>设计时没考虑到 Schema 会变。</p><p><b>方案：</b>① 给每个 State 版本打标记（v1/v2/v3），反序列化时先检查版本号，走对应版本的 Schema 做 migration；② Schema 变更只允许新增或加 Optional，不允许删除或改不兼容类型；③ 这个约束写进 Code Review 规范——改 State Schema 必须同时提供 migration 函数。</p><p><b>反思：</b><b>AI 系统的状态管理比传统系统更脆弱。</b>传统系统的数据结构变更可以通过数据库 migration 管理，但 LangGraph 的 Checkpointer 存的是序列化对象，Schema 不兼容直接报错。以后所有涉及持久化的数据结构变更，必须考虑向前兼容。</p></div></div>
+<div class="qa"><div class="qa-q" onclick="toggle(this)">难点7【P5 Agent Harness】质量红线单项必过，一个边界case波动卡死发布<span class="diff d2">⭐⭐</span><span class="arrow">▶</span></div><div class="qa-a"><p><b>问题：</b>早期质量红线设的是单项必须过——意图准确率≥90%、幻觉率≤5%、延迟≤3s，有一项不过就阻断发布。结果同事优化了 Prompt，大部分 CASE 分数提升了，但一个边界 case 从 95 降到了 92，刚好踩到红线被阻断。</p><p><b>矛盾：</b>这个改动整体是正向的，但因为 1% 的波动卡了 99% 的正确改进。</p><p><b>方案：</b>改成三层保护——① 总分加权过（允许个别 case 波动）；② 关键场景保底分（投诉/理赔等核心场景单独设阈值）；③ 异常波动检测（单项降幅超 15% 自动标记人工确认）。</p><p><b>反思：</b><b>质量门禁的设计目标是"不放走真正的问题"和"不误杀好的改进"之间的平衡。</b>单项必过保底线但误杀率高，总分加权灵活但可能掩盖关键场景的崩塌。没有完美的方案，只有根据实际运行数据持续调整的配置。</p></div></div>
 </section>
 </div>
 
